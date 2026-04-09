@@ -1,13 +1,2 @@
-# Site navigation — used by custom layouts (home.html / page-custom.html)
-# The nav bar is rendered directly in those layouts; this file is kept
-# for reference and future use.
-
-main:
-  - title: "Publications"
-    url: /publications/
-
-  - title: "Blog"
-    url: /blog/
-
-  - title: "CV"
-    url: /cv/
+# Nav links are defined in _layouts/home.html and _layouts/page-custom.html (hard-coded).
+# Edit those files to change the menu.
