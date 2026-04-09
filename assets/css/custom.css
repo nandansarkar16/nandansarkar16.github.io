@@ -389,6 +389,17 @@ img { display: block; max-width: 100%; }
   padding-bottom: 0;
 }
 
+.x-embed-fail {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+}
+
+.x-embed-fail[hidden] {
+  display: none !important;
+}
+
 /* ──────────────────────────────────────────────────────────
    VISITOR / STATS CARDS
    ────────────────────────────────────────────────────────── */

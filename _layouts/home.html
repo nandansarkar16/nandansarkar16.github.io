@@ -158,15 +158,17 @@
       <section class="content-section" id="x-section">
         <h2 class="section-heading">recent posts on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
         <div class="x-widget">
-          <p class="x-description">Scroll the timeline below for recent posts. If nothing loads, ad blockers or privacy extensions may block X&rsquo;s embed script &mdash; open my profile directly instead.</p>
-          <div class="twitter-timeline-wrap">
+          <p class="x-description">Recent posts load below when X&rsquo;s embed is available. Third-party sites often can&rsquo;t show the timeline (browser settings, X outages, or regional limits)&mdash;use the link at the bottom if this stays blank.</p>
+          <div class="twitter-timeline-wrap" id="twitterTimelineWrap">
             <a
               class="twitter-timeline"
+              id="twitterTimelineAnchor"
               data-height="420"
               data-theme="light"
-              data-chrome="nofooter"
+              data-dnt="true"
               href="https://twitter.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
             >Posts by @{{ site.author.twitter | default: "nandan_sarkar_" }}</a>
+            <p class="x-embed-fail" id="twitterEmbedFail" hidden>Couldn&rsquo;t load the embedded timeline. <a href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}" target="_blank" rel="noopener">View posts on X</a>.</p>
           </div>
           <p class="x-fallback">
             <a href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}" target="_blank" rel="noopener" class="x-cta">
@@ -212,7 +214,6 @@
     </div>
   </footer>
 
-  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-  <script src="{{ '/assets/js/custom.js' | relative_url }}"></script>
+  <script defer src="{{ '/assets/js/custom.js' | relative_url }}"></script>
 </body>
 </html>
