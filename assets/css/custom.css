@@ -834,6 +834,12 @@ img { display: block; max-width: 100%; }
   color: var(--text-muted);
 }
 
+.pub-scholar-note {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
 /* ──────────────────────────────────────────────────────────
    RESPONSIVE — TABLET
    ────────────────────────────────────────────────────────── */
