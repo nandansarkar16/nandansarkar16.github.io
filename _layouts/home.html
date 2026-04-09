@@ -74,33 +74,15 @@
           </div>
 
           <div class="social-links">
-            {% if site.author.googlescholar %}
-            <a href="{{ site.author.googlescholar }}" class="social-link" target="_blank" rel="noopener">
-              <i class="ai ai-google-scholar"></i><span>Scholar</span>
-            </a>
-            {% else %}
-            <a href="#" class="social-link">
-              <i class="ai ai-google-scholar"></i><span>Scholar</span>
-            </a>
-            {% endif %}
-
-            {% if site.author.github %}
-            <a href="https://github.com/{{ site.author.github }}" class="social-link" target="_blank" rel="noopener">
-              <i class="fab fa-github"></i><span>GitHub</span>
-            </a>
-            {% else %}
-            <a href="#" class="social-link">
-              <i class="fab fa-github"></i><span>GitHub</span>
-            </a>
-            {% endif %}
-
             {% if site.author.twitter %}
             <a href="https://x.com/{{ site.author.twitter }}" class="social-link" target="_blank" rel="noopener">
               <i class="fab fa-x-twitter"></i><span>X</span>
             </a>
-            {% else %}
-            <a href="#" class="social-link">
-              <i class="fab fa-x-twitter"></i><span>X</span>
+            {% endif %}
+
+            {% if site.author.googlescholar %}
+            <a href="{{ site.author.googlescholar }}" class="social-link" target="_blank" rel="noopener">
+              <i class="ai ai-google-scholar"></i><span>Scholar</span>
             </a>
             {% endif %}
 
@@ -108,18 +90,16 @@
             <a href="https://linkedin.com/in/{{ site.author.linkedin }}" class="social-link" target="_blank" rel="noopener">
               <i class="fab fa-linkedin-in"></i><span>LinkedIn</span>
             </a>
-            {% else %}
-            <a href="#" class="social-link">
-              <i class="fab fa-linkedin-in"></i><span>LinkedIn</span>
+            {% endif %}
+
+            {% if site.author.github %}
+            <a href="https://github.com/{{ site.author.github }}" class="social-link" target="_blank" rel="noopener">
+              <i class="fab fa-github"></i><span>GitHub</span>
             </a>
             {% endif %}
 
             {% if site.author.email %}
             <a href="mailto:{{ site.author.email }}" class="social-link">
-              <i class="fas fa-envelope"></i><span>Email</span>
-            </a>
-            {% else %}
-            <a href="mailto:placeholder@example.com" class="social-link">
               <i class="fas fa-envelope"></i><span>Email</span>
             </a>
             {% endif %}
@@ -154,29 +134,33 @@
 
       <div class="section-divider"></div>
 
-      <!-- ── X / TWITTER (embedded timeline via widgets.js) ── -->
+      <!-- ── X / TWITTER ── -->
       <section class="content-section" id="x-section">
-        <h2 class="section-heading">recent posts on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
-        <div class="x-widget">
-          <p class="x-description">Recent posts load below when X&rsquo;s embed is available. Third-party sites often can&rsquo;t show the timeline (browser settings, X outages, or regional limits)&mdash;use the link at the bottom if this stays blank.</p>
-          <div class="twitter-timeline-wrap" id="twitterTimelineWrap">
-            <a
-              class="twitter-timeline"
-              id="twitterTimelineAnchor"
-              data-height="420"
-              data-theme="light"
-              data-dnt="true"
-              href="https://twitter.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
-            >Posts by @{{ site.author.twitter | default: "nandan_sarkar_" }}</a>
-            <p class="x-embed-fail" id="twitterEmbedFail" hidden>Couldn&rsquo;t load the embedded timeline. <a href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}" target="_blank" rel="noopener">View posts on X</a>.</p>
-          </div>
-          <p class="x-fallback">
-            <a href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}" target="_blank" rel="noopener" class="x-cta">
-              <i class="fab fa-x-twitter"></i>
-              Open @{{ site.author.twitter | default: "nandan_sarkar_" }} on X &rarr;
-            </a>
-          </p>
+        <h2 class="section-heading">on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
+
+        <!-- Timeline: widgets.js replaces this anchor with an iframe when it loads -->
+        <div class="x-timeline-wrap" id="xTimelineWrap">
+          <a
+            class="twitter-timeline"
+            data-height="500"
+            data-theme="light"
+            data-chrome="noheader nofooter noborders"
+            data-dnt="true"
+            href="https://twitter.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
+          >Tweets by @{{ site.author.twitter | default: "nandan_sarkar_" }}</a>
         </div>
+
+        <!-- Profile card — always visible as a clear CTA -->
+        <a
+          href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
+          class="x-profile-card"
+          target="_blank"
+          rel="noopener"
+          aria-label="View @{{ site.author.twitter | default: 'nandan_sarkar_' }} on X"
+        >
+          <span class="x-profile-card__handle">@{{ site.author.twitter | default: "nandan_sarkar_" }}</span>
+          <span class="x-profile-card__cta">View on X <i class="fab fa-x-twitter"></i></span>
+        </a>
       </section>
 
       <div class="section-divider"></div>
@@ -189,14 +173,13 @@
             <i class="fas fa-earth-americas stat-icon" aria-hidden="true"></i>
             <div class="stat-body stat-body--map">
               <p class="stat-label">Where visitors are from</p>
-              <p class="stat-sub stat-sub--map">Approximate locations of everyone who has visited this site (aggregated). Not your personal location.</p>
               {% include visitor-map.html %}
             </div>
           </div>
           <div class="stat-card">
             <i class="fas fa-chart-line stat-icon" aria-hidden="true"></i>
             <div class="stat-body">
-              <p class="stat-label">Page loads this month</p>
+              <p class="stat-label">Visitors this month</p>
               <p class="stat-value" id="visitor-count">—</p>
               <p class="stat-sub" id="visitor-month-label"></p>
             </div>
@@ -215,5 +198,6 @@
   </footer>
 
   <script defer src="{{ '/assets/js/custom.js' | relative_url }}"></script>
+  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>
 </html>

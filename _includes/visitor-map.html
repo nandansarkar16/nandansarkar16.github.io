@@ -1,12 +1,12 @@
-{% if site.mapmyvisitors_script_src and site.mapmyvisitors_script_src != "" %}
-  <div class="visitor-map-embed" aria-label="Visitor map">
-    <script type="text/javascript" id="mapmyvisitors" src="{{ site.mapmyvisitors_script_src }}"></script>
-  </div>
-{% else %}
-  <div class="visitor-map-placeholder">
-    <p class="visitor-map-placeholder__text">
-      Add your MapMyVisitors embed: copy the <code>src</code> URL from their widget code into
-      <code>mapmyvisitors_script_src</code> in <code>_config.yml</code>.
-    </p>
-  </div>
-{% endif %}
+{% comment %}
+  MapMyVisitors widget. URL is hardcoded here (not via Liquid variable) so Jekyll
+  does not HTML-escape the & characters, which would break MapMyVisitors' server-side
+  installation check and prevent visit tracking.
+  To update the widget URL, replace the src below with the new URL from your
+  MapMyVisitors dashboard (Widget Customization → Javascript embed → copy src).
+{% endcomment %}
+<div class="visitor-map-embed" aria-label="Visitor map">
+  <script type="text/javascript" id="mapmyvisitors"
+    src="https://mapmyvisitors.com/map.js?cl=ffffff&w=a&t=n&d=YaX_vUQKLKJ2BoiPUsMw398q2QzMNF0q2yic_oxJjHw&cmo=c38ae0&cmn=c38ae0"
+  ></script>
+</div>

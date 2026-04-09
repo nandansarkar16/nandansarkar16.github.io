@@ -334,70 +334,71 @@ img { display: block; max-width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────
-   X / TWITTER WIDGET
+   X / TWITTER
    ────────────────────────────────────────────────────────── */
-.x-widget {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
 
-.x-description {
-  font-size: 0.92rem;
-  color: var(--text-muted);
-}
-
-.x-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text);
-  border-bottom: 1.5px solid var(--border);
-  padding-bottom: 1px;
-  width: fit-content;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.x-cta:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.x-cta i { font-size: 0.88rem; }
-
-/* Embedded X / Twitter timeline (widgets.js) */
-.twitter-timeline-wrap {
+/* Timeline iframe injected by widgets.js */
+.x-timeline-wrap {
   width: 100%;
-  min-height: 200px;
-  margin-top: 0.5rem;
+  max-width: 550px;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
 
-.twitter-timeline-wrap iframe {
+.x-timeline-wrap iframe {
+  display: block;
   border-radius: var(--radius-lg) !important;
 }
 
-.x-fallback {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.x-fallback .x-cta {
-  display: inline-flex;
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.x-embed-fail {
+/* Before widgets.js fires, the raw anchor is visible — make it unobtrusive */
+.x-timeline-wrap > a.twitter-timeline {
+  display: block;
+  padding: 1rem;
   font-size: 0.88rem;
   color: var(--text-muted);
-  margin: 0.75rem 0 0;
-  line-height: 1.5;
+}
+.x-profile-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.85rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  max-width: 320px;
 }
 
-.x-embed-fail[hidden] {
-  display: none !important;
+.x-profile-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+}
+
+.x-profile-card__handle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.x-profile-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.x-profile-card:hover .x-profile-card__cta {
+  color: var(--accent);
 }
 
 /* ──────────────────────────────────────────────────────────

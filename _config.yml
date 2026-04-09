@@ -16,9 +16,6 @@ url                      : https://nandansarkar16.github.io
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
 repository               : "nandansarkar16/nandansarkar16.github.io"
 
-# Visitor map (MapMyVisitors). Paste the full script `src` from the dashboard embed.
-mapmyvisitors_script_src : "https://mapmyvisitors.com/map.js?cl=ffffff&w=a&t=n&d=YaX_vUQKLKJ2BoiPUsMw398q2QzMNF0q2yic_oxJjHw&cmo=c38ae0&cmn=c38ae0"
-
 # Author (used by Liquid in _layouts; sidebar theme removed)
 author:
   # Biographic information
