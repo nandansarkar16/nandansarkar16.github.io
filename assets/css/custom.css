@@ -828,6 +828,12 @@ img { display: block; max-width: 100%; }
   border-color: var(--text);
 }
 
+.pub-footnote {
+  margin-top: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 /* ──────────────────────────────────────────────────────────
    RESPONSIVE — TABLET
    ────────────────────────────────────────────────────────── */
