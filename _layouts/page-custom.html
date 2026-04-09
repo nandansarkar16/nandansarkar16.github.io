@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ site.description }}">
+  <title>{{ page.title }} — {{ site.author.name | default: site.name }}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="{{ '/' | relative_url }}" class="nav-brand">{{ site.author.name | default: "Your Name" }}</a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links" id="navLinks" role="list">
+        <li><a href="{{ '/' | relative_url }}"              class="nav-link{% if page.url == '/' %} active{% endif %}">about</a></li>
+        <li><a href="{{ '/publications/' | relative_url }}" class="nav-link{% if page.url contains 'publication' %} active{% endif %}">publications</a></li>
+        <li><a href="{{ '/blog/' | relative_url }}"         class="nav-link{% if page.url contains 'blog' or page.url contains 'archive' or page.url contains 'post' %} active{% endif %}">blog</a></li>
+        <li><a href="{{ '/cv/' | relative_url }}"           class="nav-link{% if page.url contains 'cv' or page.url contains 'resume' %} active{% endif %}">cv</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="site-main">
+    <div class="container">
+
+      <div class="page-header">
+        <h1 class="page-title">{{ page.title }}</h1>
+        {% if page.subtitle %}<p class="page-subtitle">{{ page.subtitle }}</p>{% endif %}
+      </div>
+
+      <div class="page-content">
+        {{ content }}
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="footer-year"></span> {{ site.author.name | default: "Your Name" }}</p>
+    </div>
+  </footer>
+
+  <script src="{{ '/assets/js/custom.js' | relative_url }}"></script>
+</body>
+</html>

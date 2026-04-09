@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ site.description }}">
+  <title>{{ site.author.name | default: "Your Name" }}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <header class="site-header">
+    <nav class="navbar">
+      <a href="{{ '/' | relative_url }}" class="nav-brand">{{ site.author.name | default: "Your Name" }}</a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links" id="navLinks" role="list">
+        <li><a href="{{ '/' | relative_url }}"            class="nav-link active">about</a></li>
+        <li><a href="{{ '/publications/' | relative_url }}" class="nav-link">publications</a></li>
+        <li><a href="{{ '/blog/' | relative_url }}"        class="nav-link">blog</a></li>
+        <li><a href="{{ '/cv/' | relative_url }}"          class="nav-link">cv</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="site-main">
+    <div class="container">
+
+      <!-- ── PROFILE ── -->
+      <section class="profile-section">
+        <div class="profile-content">
+          <h1 class="profile-name">{{ site.author.name | default: "Your Name" }}</h1>
+          <p class="profile-role">Incoming CS PhD · NYU Courant · Yale CS &amp; Applied Math</p>
+
+          <div class="profile-bio">
+            <p>I am an incoming Computer Science PhD student at
+              <a href="https://cs.nyu.edu/home/index.html" target="_blank" rel="noopener">NYU Courant</a>,
+              where I will be working with Professors
+              <a href="https://eunsol.github.io/#group" target="_blank" rel="noopener">Eunsol Choi</a>
+              and
+              <a href="https://izmailovpavel.github.io/" target="_blank" rel="noopener">Pavel Izmailov</a>.
+              [Research interests placeholder — add 1–2 sentences about what problems you're excited to work on.]
+            </p>
+            <p>I am currently finishing my undergraduate studies at
+              <a href="https://www.yale.edu" target="_blank" rel="noopener">Yale University</a>,
+              where I am double majoring in Computer Science (B.S.) and Applied Mathematics (B.S.).
+              [Optional: add anything notable from your undergrad — projects, research, awards, etc.]
+            </p>
+          </div>
+
+          <div class="social-links">
+            {% if site.author.googlescholar %}
+            <a href="{{ site.author.googlescholar }}" class="social-link" target="_blank" rel="noopener">
+              <i class="ai ai-google-scholar"></i><span>Scholar</span>
+            </a>
+            {% else %}
+            <a href="#" class="social-link">
+              <i class="ai ai-google-scholar"></i><span>Scholar</span>
+            </a>
+            {% endif %}
+
+            {% if site.author.github %}
+            <a href="https://github.com/{{ site.author.github }}" class="social-link" target="_blank" rel="noopener">
+              <i class="fab fa-github"></i><span>GitHub</span>
+            </a>
+            {% else %}
+            <a href="#" class="social-link">
+              <i class="fab fa-github"></i><span>GitHub</span>
+            </a>
+            {% endif %}
+
+            {% if site.author.twitter %}
+            <a href="https://x.com/{{ site.author.twitter }}" class="social-link" target="_blank" rel="noopener">
+              <i class="fab fa-x-twitter"></i><span>X</span>
+            </a>
+            {% else %}
+            <a href="#" class="social-link">
+              <i class="fab fa-x-twitter"></i><span>X</span>
+            </a>
+            {% endif %}
+
+            {% if site.author.linkedin %}
+            <a href="https://linkedin.com/in/{{ site.author.linkedin }}" class="social-link" target="_blank" rel="noopener">
+              <i class="fab fa-linkedin-in"></i><span>LinkedIn</span>
+            </a>
+            {% else %}
+            <a href="#" class="social-link">
+              <i class="fab fa-linkedin-in"></i><span>LinkedIn</span>
+            </a>
+            {% endif %}
+
+            {% if site.author.email %}
+            <a href="mailto:{{ site.author.email }}" class="social-link">
+              <i class="fas fa-envelope"></i><span>Email</span>
+            </a>
+            {% else %}
+            <a href="mailto:placeholder@example.com" class="social-link">
+              <i class="fas fa-envelope"></i><span>Email</span>
+            </a>
+            {% endif %}
+
+            <a href="{{ '/cv/' | relative_url }}" class="social-link">
+              <i class="fas fa-file-lines"></i><span>CV</span>
+            </a>
+          </div>
+        </div><!-- /profile-content -->
+
+        <div class="profile-photo" id="profilePhoto">
+          <img
+            src="{{ '/images/profile.png' | relative_url }}"
+            alt="{{ site.author.name | default: 'Profile photo' }}"
+            onerror="document.getElementById('profilePhoto').classList.add('photo-placeholder'); this.remove();"
+          >
+        </div>
+      </section><!-- /profile-section -->
+
+      <div class="section-divider"></div>
+
+      <!-- ── NEWS ── -->
+      <section class="content-section" id="news">
+        <h2 class="section-heading">news</h2>
+        <div class="news-table">
+          <div class="news-row">
+            <span class="news-date">Apr 2026</span>
+            <span class="news-text">[News placeholder — paper acceptance, award, talk, or milestone.]</span>
+          </div>
+          <div class="news-row">
+            <span class="news-date">Mar 2026</span>
+            <span class="news-text">[News placeholder.]</span>
+          </div>
+          <div class="news-row">
+            <span class="news-date">Jan 2026</span>
+            <span class="news-text">[News placeholder.]</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── X / TWITTER ── -->
+      <section class="content-section" id="x-section">
+        <h2 class="section-heading">recent posts on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
+        <div class="x-widget">
+          <p class="x-description">Follow along for research updates, preprints, and musings.</p>
+          <a
+            href="https://x.com/{{ site.author.twitter | default: 'yourhandle' }}"
+            class="x-cta"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fab fa-x-twitter"></i>
+            View @{{ site.author.twitter | default: "yourhandle" }} on X →
+          </a>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- ── VISITOR STATS ── -->
+      <section class="content-section" id="stats">
+        <h2 class="section-heading">visitor info</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <i class="fas fa-location-dot stat-icon"></i>
+            <div class="stat-body">
+              <p class="stat-label">You're viewing from</p>
+              <p class="stat-value" id="visitor-location">Detecting…</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-chart-line stat-icon"></i>
+            <div class="stat-body">
+              <p class="stat-label">Visitors this month</p>
+              <p class="stat-value" id="visitor-count">—</p>
+              <p class="stat-sub"  id="visitor-month-label"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /container -->
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="footer-year"></span> {{ site.author.name | default: "Your Name" }}</p>
+    </div>
+  </footer>
+
+  <script src="{{ '/assets/js/custom.js' | relative_url }}"></script>
+</body>
+</html>

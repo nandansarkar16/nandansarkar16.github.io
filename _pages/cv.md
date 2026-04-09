@@ -1,8 +1,9 @@
 ---
-layout: archive
+layout: page-custom
 title: "CV"
+subtitle: "Placeholder — update with your real information"
 permalink: /cv/
-author_profile: true
+author_profile: false
 redirect_from:
   - /resume
 ---
