@@ -208,6 +208,11 @@ img { display: block; max-width: 100%; }
 
 .profile-bio p:last-child { margin-bottom: 0; }
 
+.profile-bio a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Social link pills */
 .social-links {
   display: flex;
@@ -362,6 +367,28 @@ img { display: block; max-width: 100%; }
 
 .x-cta i { font-size: 0.88rem; }
 
+/* Embedded X / Twitter timeline (widgets.js) */
+.twitter-timeline-wrap {
+  width: 100%;
+  min-height: 200px;
+  margin-top: 0.5rem;
+}
+
+.twitter-timeline-wrap iframe {
+  border-radius: var(--radius-lg) !important;
+}
+
+.x-fallback {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.x-fallback .x-cta {
+  display: inline-flex;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 /* ──────────────────────────────────────────────────────────
    VISITOR / STATS CARDS
    ────────────────────────────────────────────────────────── */
@@ -369,6 +396,12 @@ img { display: block; max-width: 100%; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+/* Visitor map + monthly counter */
+.stats-grid--visitor {
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  align-items: stretch;
 }
 
 .stat-card {
@@ -382,7 +415,55 @@ img { display: block; max-width: 100%; }
   transition: box-shadow 0.2s;
 }
 
+.stat-card--map {
+  align-items: flex-start;
+}
+
+.stat-body--map {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-sub--map {
+  margin-bottom: 0.65rem;
+  max-width: 42rem;
+}
+
 .stat-card:hover { box-shadow: var(--shadow-sm); }
+
+/* MapMyVisitors embed */
+.visitor-map-embed {
+  width: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.visitor-map-embed img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.visitor-map-placeholder {
+  padding: 1rem 1rem;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.visitor-map-placeholder__text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.visitor-map-placeholder__text code {
+  font-size: 0.78rem;
+  padding: 0.1rem 0.35rem;
+  background: var(--surface);
+  border-radius: 4px;
+}
 
 .stat-icon {
   font-size: 1.2rem;

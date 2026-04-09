@@ -1,0 +1,12 @@
+{% if site.mapmyvisitors_script_src and site.mapmyvisitors_script_src != "" %}
+  <div class="visitor-map-embed" aria-label="Visitor map">
+    <script type="text/javascript" id="mapmyvisitors" src="{{ site.mapmyvisitors_script_src }}"></script>
+  </div>
+{% else %}
+  <div class="visitor-map-placeholder">
+    <p class="visitor-map-placeholder__text">
+      Add your MapMyVisitors embed: copy the <code>src</code> URL from their widget code into
+      <code>mapmyvisitors_script_src</code> in <code>_config.yml</code>.
+    </p>
+  </div>
+{% endif %}

@@ -39,28 +39,6 @@
   if (el) el.textContent = new Date().getFullYear();
 }());
 
-/* ── Visitor location via ipwho.is ── */
-(function () {
-  var el = document.getElementById("visitor-location");
-  if (!el) return;
-
-  fetch("https://ipwho.is/")
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      if (data && data.success) {
-        var parts = [];
-        if (data.city)    parts.push(data.city);
-        if (data.country) parts.push(data.country);
-        el.textContent = parts.length ? parts.join(", ") : "Unknown location";
-      } else {
-        el.textContent = "Location unavailable";
-      }
-    })
-    .catch(function () {
-      el.textContent = "Location unavailable";
-    });
-}());
-
 /* ── Monthly visitor counter via CounterAPI ── */
 (function () {
   var countEl = document.getElementById("visitor-count");

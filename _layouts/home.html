@@ -44,18 +44,32 @@
           <p class="profile-role">Incoming CS PhD · NYU Courant · Yale CS &amp; Applied Math</p>
 
           <div class="profile-bio">
-            <p>I am an incoming Computer Science PhD student at
-              <a href="https://cs.nyu.edu/home/index.html" target="_blank" rel="noopener">NYU Courant</a>,
+            <p>Hey! I&rsquo;m an incoming PhD student in Computer Science at
+              <a href="https://cims.nyu.edu/dynamic/" target="_blank" rel="noopener">NYU Courant</a>,
               where I will be working with Professors
-              <a href="https://eunsol.github.io/#group" target="_blank" rel="noopener">Eunsol Choi</a>
+              <a href="https://eunsol.github.io/" target="_blank" rel="noopener">Eunsol Choi</a>
               and
               <a href="https://izmailovpavel.github.io/" target="_blank" rel="noopener">Pavel Izmailov</a>.
-              [Research interests placeholder — add 1–2 sentences about what problems you're excited to work on.]
+              I&rsquo;m interested in natural language processing and machine learning; broadly, my research interests include designing efficient model architectures, understanding the capabilities and limitations of current systems, and developing models with more human-like generalization and reasoning.
             </p>
             <p>I am currently finishing my undergraduate studies at
-              <a href="https://www.yale.edu" target="_blank" rel="noopener">Yale University</a>,
+              <a href="https://engineering.yale.edu/academic-study/departments/computer-science" target="_blank" rel="noopener">Yale University</a>,
               where I am double majoring in Computer Science (B.S.) and Applied Mathematics (B.S.).
-              [Optional: add anything notable from your undergrad — projects, research, awards, etc.]
+            </p>
+            <p>At Yale, I have spent three amazing years working with Professor
+              <a href="https://armancohan.com/" target="_blank" rel="noopener">Arman Cohan</a>.
+              I have also been fortunate to spend two summers in person and two years working remotely at
+              <a href="https://www.csail.mit.edu/" target="_blank" rel="noopener">MIT CSAIL</a>
+              working with Professor
+              <a href="https://people.csail.mit.edu/yoonkim/" target="_blank" rel="noopener">Yoon Kim</a>.
+            </p>
+            <p>I&rsquo;ve had the opportunity to learn from incredible mentors throughout my journey, including
+              <a href="https://www.linkedin.com/in/abbaszeitoun/" target="_blank" rel="noopener">Abbas Zeitoun</a>,
+              <a href="https://ltorroba.github.io/" target="_blank" rel="noopener">Lucas Torroba-Hennigen</a>,
+              <a href="https://shruti-singh.github.io/" target="_blank" rel="noopener">Shruti Singh</a>,
+              and
+              <a href="https://www.linkedin.com/in/zhaobo-kevin-zheng-247866112/" target="_blank" rel="noopener">Zhaobo K. Zheng</a>
+              (during my high school research at Vanderbilt University). Be sure to check out their amazing work!
             </p>
           </div>
 
@@ -133,57 +147,56 @@
         <div class="news-table">
           <div class="news-row">
             <span class="news-date">Apr 2026</span>
-            <span class="news-text">[News placeholder — paper acceptance, award, talk, or milestone.]</span>
-          </div>
-          <div class="news-row">
-            <span class="news-date">Mar 2026</span>
-            <span class="news-text">[News placeholder.]</span>
-          </div>
-          <div class="news-row">
-            <span class="news-date">Jan 2026</span>
-            <span class="news-text">[News placeholder.]</span>
+            <span class="news-text">I will be joining NYU Courant as a PhD student this fall, where I will work with Professors Eunsol Choi and Pavel Izmailov.</span>
           </div>
         </div>
       </section>
 
       <div class="section-divider"></div>
 
-      <!-- ── X / TWITTER ── -->
+      <!-- ── X / TWITTER (embedded timeline via widgets.js) ── -->
       <section class="content-section" id="x-section">
         <h2 class="section-heading">recent posts on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
         <div class="x-widget">
-          <p class="x-description">Follow along for research updates, preprints, and musings.</p>
-          <a
-            href="https://x.com/{{ site.author.twitter | default: 'yourhandle' }}"
-            class="x-cta"
-            target="_blank"
-            rel="noopener"
-          >
-            <i class="fab fa-x-twitter"></i>
-            View @{{ site.author.twitter | default: "yourhandle" }} on X →
-          </a>
+          <p class="x-description">Scroll the timeline below for recent posts. If nothing loads, ad blockers or privacy extensions may block X&rsquo;s embed script &mdash; open my profile directly instead.</p>
+          <div class="twitter-timeline-wrap">
+            <a
+              class="twitter-timeline"
+              data-height="420"
+              data-theme="light"
+              data-chrome="nofooter"
+              href="https://twitter.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
+            >Posts by @{{ site.author.twitter | default: "nandan_sarkar_" }}</a>
+          </div>
+          <p class="x-fallback">
+            <a href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}" target="_blank" rel="noopener" class="x-cta">
+              <i class="fab fa-x-twitter"></i>
+              Open @{{ site.author.twitter | default: "nandan_sarkar_" }} on X &rarr;
+            </a>
+          </p>
         </div>
       </section>
 
       <div class="section-divider"></div>
 
-      <!-- ── VISITOR STATS ── -->
+      <!-- ── VISITOR MAP + COUNT (aggregated map, not current viewer location) ── -->
       <section class="content-section" id="stats">
-        <h2 class="section-heading">visitor info</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <i class="fas fa-location-dot stat-icon"></i>
-            <div class="stat-body">
-              <p class="stat-label">You're viewing from</p>
-              <p class="stat-value" id="visitor-location">Detecting…</p>
+        <h2 class="section-heading">visitor map &amp; traffic</h2>
+        <div class="stats-grid stats-grid--visitor">
+          <div class="stat-card stat-card--map">
+            <i class="fas fa-earth-americas stat-icon" aria-hidden="true"></i>
+            <div class="stat-body stat-body--map">
+              <p class="stat-label">Where visitors are from</p>
+              <p class="stat-sub stat-sub--map">Approximate locations of everyone who has visited this site (aggregated). Not your personal location.</p>
+              {% include visitor-map.html %}
             </div>
           </div>
           <div class="stat-card">
-            <i class="fas fa-chart-line stat-icon"></i>
+            <i class="fas fa-chart-line stat-icon" aria-hidden="true"></i>
             <div class="stat-body">
-              <p class="stat-label">Visitors this month</p>
+              <p class="stat-label">Page loads this month</p>
               <p class="stat-value" id="visitor-count">—</p>
-              <p class="stat-sub"  id="visitor-month-label"></p>
+              <p class="stat-sub" id="visitor-month-label"></p>
             </div>
           </div>
         </div>
@@ -199,6 +212,7 @@
     </div>
   </footer>
 
+  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   <script src="{{ '/assets/js/custom.js' | relative_url }}"></script>
 </body>
 </html>
