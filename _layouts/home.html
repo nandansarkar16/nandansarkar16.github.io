@@ -134,37 +134,6 @@
 
       <div class="section-divider"></div>
 
-      <!-- ── X / TWITTER ── -->
-      <section class="content-section" id="x-section">
-        <h2 class="section-heading">on <i class="fab fa-x-twitter" style="font-size:.85em;vertical-align:middle;"></i></h2>
-
-        <!-- Timeline: widgets.js replaces this anchor with an iframe when it loads -->
-        <div class="x-timeline-wrap" id="xTimelineWrap">
-          <a
-            class="twitter-timeline"
-            data-height="500"
-            data-theme="light"
-            data-chrome="noheader nofooter noborders"
-            data-dnt="true"
-            href="https://twitter.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
-          >Tweets by @{{ site.author.twitter | default: "nandan_sarkar_" }}</a>
-        </div>
-
-        <!-- Profile card — always visible as a clear CTA -->
-        <a
-          href="https://x.com/{{ site.author.twitter | default: 'nandan_sarkar_' }}"
-          class="x-profile-card"
-          target="_blank"
-          rel="noopener"
-          aria-label="View @{{ site.author.twitter | default: 'nandan_sarkar_' }} on X"
-        >
-          <span class="x-profile-card__handle">@{{ site.author.twitter | default: "nandan_sarkar_" }}</span>
-          <span class="x-profile-card__cta">View on X <i class="fab fa-x-twitter"></i></span>
-        </a>
-      </section>
-
-      <div class="section-divider"></div>
-
       <!-- ── VISITOR MAP + COUNT (aggregated map, not current viewer location) ── -->
       <section class="content-section" id="stats">
         <h2 class="section-heading">visitor map &amp; traffic</h2>
@@ -198,6 +167,5 @@
   </footer>
 
   <script defer src="{{ '/assets/js/custom.js' | relative_url }}"></script>
-  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>
 </html>
