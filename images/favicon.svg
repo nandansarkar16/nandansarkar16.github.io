@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Larger glyph fills more of the tab rasterization (browser still caps display size) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 14 72 72">
+  <!-- Tighter viewBox zooms the glyph so it fills the tab’s fixed pixel size -->
   <text x="50" y="52" font-size="92" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji, sans-serif">🤨</text>
 </svg>
