@@ -307,7 +307,25 @@ img { display: block; max-width: 100%; }
 /* ──────────────────────────────────────────────────────────
    NEWS TABLE
    ────────────────────────────────────────────────────────── */
-.news-table { }
+.news-table {
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.news-table::-webkit-scrollbar {
+  width: 4px;
+}
+
+.news-table::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.news-table::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
 
 .news-row {
   display: flex;
