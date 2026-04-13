@@ -428,10 +428,10 @@ img { display: block; max-width: 100%; }
   gap: 1rem;
 }
 
-/* Visitor map + monthly counter */
-.stats-grid--visitor {
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  align-items: stretch;
+/* Visitor map full-width centered */
+.visitor-map-full {
+  display: flex;
+  justify-content: center;
 }
 
 .stat-card {
@@ -464,6 +464,7 @@ img { display: block; max-width: 100%; }
 /* MapMyVisitors embed */
 .visitor-map-embed {
   width: 100%;
+  max-width: 640px;
   min-height: 180px;
   overflow: hidden;
   border-radius: var(--radius);

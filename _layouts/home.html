@@ -142,25 +142,11 @@
 
       <div class="section-divider"></div>
 
-      <!-- ── VISITOR MAP + COUNT (aggregated map, not current viewer location) ── -->
+      <!-- ── VISITOR MAP ── -->
       <section class="content-section" id="stats">
-        <h2 class="section-heading">visitor map &amp; traffic</h2>
-        <div class="stats-grid stats-grid--visitor">
-          <div class="stat-card stat-card--map">
-            <i class="fas fa-earth-americas stat-icon" aria-hidden="true"></i>
-            <div class="stat-body stat-body--map">
-              <p class="stat-label">Where visitors are from</p>
-              {% include visitor-map.html %}
-            </div>
-          </div>
-          <div class="stat-card">
-            <i class="fas fa-chart-line stat-icon" aria-hidden="true"></i>
-            <div class="stat-body">
-              <p class="stat-label">Visitors this month</p>
-              <p class="stat-value" id="visitor-count">—</p>
-              <p class="stat-sub" id="visitor-month-label"></p>
-            </div>
-          </div>
+        <h2 class="section-heading">visitor map</h2>
+        <div class="visitor-map-full">
+          {% include visitor-map.html %}
         </div>
       </section>
 
