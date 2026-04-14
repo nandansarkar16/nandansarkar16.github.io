@@ -7,15 +7,18 @@
    CSS CUSTOM PROPERTIES
    ────────────────────────────────────────────────────────── */
 :root {
-  /* Palette */
+  /* Palette — NYU violet + light purple (map-adjacent tints) */
   --bg:          #ffffff;
   --surface:     #f8f9fb;
   --text:        #1c1917;
   --text-muted:  #64748b;
   --border:      #e2e8f0;
-  --accent:      #2563eb;
-  --accent-dark: #1d4ed8;
-  --accent-bg:   #eff6ff;
+  --accent:      #57068c;
+  --accent-dark: #3d0458;
+  --accent-bg:   #f5f0ff;
+  --accent-soft: #faf5ff;
+  --accent-muted: #e9d5ff;
+  --accent-border: #d8b4fe;
 
   /* Typography */
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -786,9 +789,9 @@ img { display: block; max-width: 100%; }
 }
 
 .pub-badge--conference {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-muted);
 }
 
 /* Link buttons */
@@ -831,13 +834,13 @@ img { display: block; max-width: 100%; }
 .pub-btn--pdf {
   background: var(--accent-bg);
   color: var(--accent);
-  border-color: #bfdbfe;
+  border-color: var(--accent-muted);
 }
 
 .pub-btn--pdf:hover {
-  background: #dbeafe;
+  background: var(--accent-soft);
   color: var(--accent-dark);
-  border-color: #93c5fd;
+  border-color: var(--accent-border);
 }
 
 .pub-btn--code {
