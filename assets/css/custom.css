@@ -7,18 +7,18 @@
    CSS CUSTOM PROPERTIES
    ────────────────────────────────────────────────────────── */
 :root {
-  /* Palette — light purple (matches map dots #c898ef) */
+  /* Palette — medium violet (darker than map #c898ef, lighter than NYU) */
   --bg:          #ffffff;
   --surface:     #f8f9fb;
   --text:        #1c1917;
   --text-muted:  #64748b;
   --border:      #e2e8f0;
-  --accent:      #c898ef;
-  --accent-dark: #a855f7;
-  --accent-bg:   #faf5ff;
-  --accent-soft: #fcf8ff;
-  --accent-muted: #eedff8;
-  --accent-border: #e0c4f5;
+  --accent:      #9333ea;
+  --accent-dark: #7c3aed;
+  --accent-bg:   #f5f0ff;
+  --accent-soft: #faf5ff;
+  --accent-muted: #e9d5ff;
+  --accent-border: #d8b4fe;
 
   /* Typography */
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
