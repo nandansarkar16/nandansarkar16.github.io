@@ -11,7 +11,7 @@ locale                   : "en-US"
 title                    : "Nandan Sarkar"
 title_separator          : "-"
 name                     : &name "Nandan Sarkar"
-description              : &description "Incoming CS PhD student at NYU Courant"
+description              : &description "CS PhD student at NYU Courant"
 url                      : https://nandansarkar16.github.io
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
 repository               : "nandansarkar16/nandansarkar16.github.io"
@@ -22,7 +22,7 @@ author:
   avatar           : "profile.png"
   name             : "Nandan Sarkar"
   pronouns         : # example: "she/her"
-  bio              : "Incoming CS PhD · NYU Courant · Yale CS & Applied Math"
+  bio              : "CS PhD · NYU Courant · Yale CS & Applied Math"
   location         : "New Haven, CT"
   employer         : "Yale University"
   uri              : https://nandansarkar16.github.io
