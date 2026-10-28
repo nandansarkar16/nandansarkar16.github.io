@@ -128,6 +128,7 @@
       <!-- ── NEWS ── -->
       <section class="content-section" id="news">
         <h2 class="section-heading">news</h2>
+        <div class="news-layout">
         <div class="news-table">
           <div class="news-row">
             <span class="news-date">May 2026</span>
@@ -141,6 +142,15 @@
             <span class="news-date">Apr 2026</span>
             <span class="news-text">I will be joining NYU Courant as a PhD student this fall, where I will work with Professors Eunsol Choi and Pavel Izmailov.</span>
           </div>
+        </div>
+        {% if site.data.tweets.size > 0 %}
+        <aside class="tweets-column">
+          {% for url in site.data.tweets %}
+          <blockquote class="twitter-tweet" data-dnt="true"><a href="{{ url }}"></a></blockquote>
+          {% endfor %}
+          <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+        </aside>
+        {% endif %}
         </div>
       </section>
 

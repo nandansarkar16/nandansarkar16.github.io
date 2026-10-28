@@ -357,6 +357,28 @@ img { display: block; max-width: 100%; }
 /* ──────────────────────────────────────────────────────────
    X / TWITTER
    ────────────────────────────────────────────────────────── */
+.news-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.news-layout .news-table { flex: 1; min-width: 0; }
+
+.tweets-column {
+  flex: 0 0 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.tweets-column .twitter-tweet { margin: 0 0 1rem !important; }
+
+@media (max-width: 780px) {
+  .news-layout { flex-direction: column; }
+  .tweets-column { flex-basis: auto; width: 100%; max-width: 550px; }
+}
 
 /* Timeline iframe injected by widgets.js */
 .x-timeline-wrap {
