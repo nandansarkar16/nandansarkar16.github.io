@@ -145,6 +145,14 @@
         </div>
         {% if site.data.tweets.size > 0 %}
         <aside class="tweets-column">
+          <a href="https://x.com/{{ site.author.twitter }}" class="x-header" target="_blank" rel="noopener">
+            <img src="{{ '/images/x-avatar.jpg' | relative_url }}" alt="">
+            <span class="x-header__names">
+              <strong>{{ site.author.name }}</strong>
+              <span>@{{ site.author.twitter }}</span>
+            </span>
+            <i class="fab fa-x-twitter"></i>
+          </a>
           {% for url in site.data.tweets %}
           <blockquote class="twitter-tweet" data-dnt="true"><a href="{{ url }}"></a></blockquote>
           {% endfor %}
