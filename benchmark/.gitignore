@@ -2,3 +2,4 @@
 results/
 *.json.key
 service-account*.json
+__pycache__/
