@@ -7,18 +7,10 @@ The prompt's numbers match the site: a 240px photo cut 6x6 at a 1280x800 viewpor
 import base64
 import json
 import os
+import pathlib
 
-SYSTEM = """You are solving a jigsaw puzzle on a web page. You see it as a 1280x800 screenshot, and screenshot pixels are exactly the coordinates the drag tool uses.
-
-The goal: a 6x6 photo puzzle of 36 pieces. Its empty spot is the wooden frame on the right side of the page, which shows a faint ghost of the finished photo to guide you. The photo area is 240x240 pixels with its top-left corner at ({x0}, {y0}). It's a grid of 40x40 cells, so the cell in column c and row r (both counted 0-5 from the top-left) has its center at ({x0}+20+40c, {y0}+20+40r).
-
-The pieces: the 36 loose pieces sit in rows in the blank margins at the left and right edges of the page. All of them are already the right way up; you never need to rotate anything. Each piece has a 40x40 square body, plus tabs that stick out up to about 12 pixels on some sides. Pieces from the edges of the photo have a flat side, and the four corner pieces have two.
-
-How dragging works: drag(from_x, from_y, to_x, to_y) presses the mouse at the first point and releases it at the second. The piece moves by exactly that distance, so press on the center of the piece's square body (not on a tab) and release on the center of the cell where it belongs.
-
-Snapping: a piece locks into place if you drop its center within 16 pixels of its correct cell center, horizontally and vertically. A locked piece loses its drop shadow and can't be moved again. A piece dropped anywhere else just stays there and may cover other pieces or the ghost image, so don't drop pieces in the frame unless you're fairly confident. Moving a misplaced piece costs another move.
-
-Budget: you have {moves} drags and {minutes} minutes in total. After each turn you get a new screenshot, the number of pieces placed, and the moves left. You can make several drags per turn. Keep going until all 36 pieces are placed."""
+# The prompt lives with the website so the leaderboard can show visitors the exact text
+SYSTEM = (pathlib.Path(__file__).parent.parent / "_includes" / "benchmark-prompt.txt").read_text().strip()
 
 DRAG = {
     "name": "drag",
