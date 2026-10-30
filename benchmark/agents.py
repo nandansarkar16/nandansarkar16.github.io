@@ -37,6 +37,7 @@ class AnthropicAgent:
         self.messages = []
         self.pending = []  # tool_use ids from the last turn, answered with the next screenshot
         self.input_tokens = self.output_tokens = 0
+        self.replies = []  # the model's text, kept in the local results file to see why a run went the way it did
 
     def next_moves(self, png, note):
         shot = [{"type": "text", "text": note},
@@ -62,6 +63,7 @@ class AnthropicAgent:
         if response.stop_reason == "refusal":
             raise RuntimeError("model refused")
         self.messages.append({"role": "assistant", "content": response.content})
+        self.replies += [b.text for b in response.content if b.type == "text" and b.text.strip()]
         calls = [b for b in response.content if b.type == "tool_use"]
         self.pending = [b.id for b in calls]
         return [b.input for b in calls if valid(b.input)]
@@ -85,6 +87,7 @@ class ChatCompletionsAgent:
         self.messages = [{"role": "system", "content": system}]
         self.pending = []
         self.input_tokens = self.output_tokens = 0
+        self.replies = []
 
     def next_moves(self, png, note):
         # Tool results are text-only in this API, so the screenshot follows as a user message
@@ -105,6 +108,8 @@ class ChatCompletionsAgent:
             self.output_tokens += response.usage.completion_tokens
         message = response.choices[0].message
         self.messages.append(message.model_dump(exclude_none=True))
+        if message.content and message.content.strip():
+            self.replies.append(message.content)
         calls = message.tool_calls or []
         self.pending = [c.id for c in calls]
         moves = []
@@ -124,6 +129,7 @@ class OracleAgent:
     def __init__(self, page):
         self.page = page
         self.input_tokens = self.output_tokens = 0
+        self.replies = []
 
     def next_moves(self, png, note):
         for p in self.page.evaluate("window.puzzle.pieces()"):

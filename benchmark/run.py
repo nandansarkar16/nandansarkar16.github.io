@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 import agents
 
-HARNESS_VERSION = 2
+HARNESS_VERSION = 3
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -35,23 +35,22 @@ def run(model_id, entry, args, browser):
     time.sleep(SETTLE)
 
     x0, y0 = page.evaluate("(() => { const r = document.querySelector('#profilePhoto img').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)]; })()")
-    system = agents.SYSTEM.format(x0=x0, y0=y0, moves=args.max_moves, minutes=round(args.time_limit / 60))
+    system = (agents.SYSTEM.replace("[[x0]]", str(x0)).replace("[[y0]]", str(y0))
+              .replace("[[moves]]", str(args.max_moves)).replace("[[minutes]]", str(round(args.time_limit / 60))))
     agent = agents.make(entry, page, system)
-    moves, idle_turns, error = 0, 0, None
+    moves, error = 0, None
     status = page.evaluate("window.puzzle.status()")
-    left = lambda: f"{status['placed']}/{status['total']} pieces placed, {args.max_moves - moves} moves left."
+    def left():
+        minutes = max(0, (args.time_limit - (time.monotonic() - start)) / 60)
+        return f"{status['placed']}/{status['total']} pieces placed, {args.max_moves - moves} moves and {minutes:.0f} minutes left."
+    start = time.monotonic()  # the clock includes model thinking and API time; only the move cap or time limit ends a run
     note = "Here is the puzzle. " + left()
-    start = time.monotonic()  # the clock includes model thinking and API time
     try:
         while not status["solved"] and moves < args.max_moves and time.monotonic() - start < args.time_limit:
             requested = agent.next_moves(page.screenshot(), note)
             if not requested:
-                idle_turns += 1
-                if idle_turns > 3:
-                    break
-                note = "You didn't drag anything. " + left() + " Keep going until all are placed."
+                note = "You didn't drag anything this turn. " + left() + " Use the drag tool to keep placing pieces until all are placed."
                 continue
-            idle_turns = 0
             for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
                 drag(page, move)
                 moves += 1
@@ -70,7 +69,7 @@ def run(model_id, entry, args, browser):
         "provider": entry["provider"], "api_model": entry.get("model", ""),
         "solved": status["solved"], "ms": round(elapsed * 1000), "placed": status["placed"], "total": status["total"],
         "placed_map": status["map"],
-        "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens,
+        "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies,
         "seed": args.seed, "error": error, "harness_version": HARNESS_VERSION,
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
     }
@@ -81,7 +80,7 @@ def upload(record):
     from firebase_admin import firestore
     if not firebase_admin._apps:
         firebase_admin.initialize_app()  # service account key from GOOGLE_APPLICATION_CREDENTIALS
-    firestore.client().collection("agents").add(record)
+    firestore.client().collection("agents").add({k: v for k, v in record.items() if k != "replies"})
 
 
 def main():
@@ -89,7 +88,7 @@ def main():
     parser.add_argument("models", nargs="+", help="ids from models.yaml, or 'oracle'")
     parser.add_argument("--url", default="https://nandansarkar16.github.io/")
     parser.add_argument("--seed", type=int, default=1, help="puzzle layout; keep it the same across models")
-    parser.add_argument("--max-moves", type=int, default=100)
+    parser.add_argument("--max-moves", type=int, default=150)
     parser.add_argument("--time-limit", type=int, default=1200, help="seconds")
     parser.add_argument("--upload", action="store_true", help="publish results to the leaderboard")
     parser.add_argument("--headed", action="store_true", help="show the browser window")
