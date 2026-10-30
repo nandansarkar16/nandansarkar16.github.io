@@ -8,14 +8,16 @@ import argparse
 import datetime
 import json
 import pathlib
+import subprocess
 import time
 
 import yaml
 from playwright.sync_api import sync_playwright
 
 import agents
+import replay
 
-HARNESS_VERSION = 6
+HARNESS_VERSION = 7
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -28,7 +30,7 @@ def drag(page, move):
     page.mouse.up()
 
 
-def run(model_id, entry, args, browser, path):
+def run(model_id, entry, args, browser, path, recorder):
     page = browser.new_page(viewport=VIEWPORT)
     page.goto(f"{args.url}?bench&seed={args.seed}")
     page.wait_for_function("window.puzzle && window.puzzle.pieces")
@@ -67,8 +69,16 @@ def run(model_id, entry, args, browser, path):
             lines.append("Your note from your last drag: " + last_note[-1500:])
         return "\n".join(lines)
 
+    def capture():
+        # Replay frames are taken off the clock: moving start forward by the capture time
+        nonlocal start
+        t = time.monotonic()
+        recorder.add(page, f"{entry['name']}  ·  move {moves}/{args.max_moves}  ·  {status['placed']}/{status['total']} placed")
+        start += time.monotonic() - t
+
     # Ends on: solved, the move cap, the time limit, or no drag for --idle-limit seconds
     start = last_drag = time.monotonic()  # the clock includes model thinking and API time
+    capture()
     note = recap("Here is the puzzle.")
     ended = None
     try:
@@ -91,6 +101,7 @@ def run(model_id, entry, args, browser, path):
                     page.wait_for_timeout(150)  # a piece that snaps counts as placed right away
                     status = page.evaluate("window.puzzle.status()")
                     recent.append((move, status["placed"] > before))
+                    capture()
                 last_drag = time.monotonic()
                 time.sleep(SETTLE)
                 status = page.evaluate("window.puzzle.status()")
@@ -108,10 +119,25 @@ def run(model_id, entry, args, browser, path):
         error = f"{type(e).__name__}: {e}"
         ended = "error"
         print(f"  {model_id}: stopped by {error}")
+    time.sleep(SETTLE)
+    capture()  # the finished board
     final = record(ended)
     path.write_text(json.dumps(final, indent=2))
     page.close()
     return final
+
+
+def publish_replay(file):
+    """Commit and push a replay so GitHub Pages serves it; retries if another run pushed first."""
+    repo = HERE.parent
+    git = ["git", "-C", str(repo), "-c", "user.name=nandansarkar16", "-c", "user.email=nandan.sarkar@yale.edu"]
+    subprocess.run(git + ["add", str(file)], check=True)
+    subprocess.run(git + ["commit", "-q", "-m", "update", "--", str(file)], check=True)
+    for _ in range(3):
+        if subprocess.run(git + ["push", "-q", "origin", "HEAD"]).returncode == 0:
+            return
+        subprocess.run(git + ["pull", "-q", "--rebase", "origin", "master"], check=True)
+    raise RuntimeError("couldn't push the replay")
 
 
 def upload(record):
@@ -148,12 +174,22 @@ def main():
             print(f"{model_id}: starting")
             stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H%M%S")
             path = results / f"{stamp}-{model_id}.json"
-            record = run(model_id, catalog[model_id], args, browser, path)
+            recorder = replay.Recorder()
+            record = run(model_id, catalog[model_id], args, browser, path, recorder)
+            publish = args.upload and model_id != "oracle" and not record["error"]
+            # Published replays live in the website so GitHub Pages can serve them; test runs stay in results/
+            video = (HERE.parent / "assets" / "replays" if publish else results) / f"{stamp}-{model_id}.mp4"
+            video.parent.mkdir(exist_ok=True)
+            recorder.save(video)
+            if publish:
+                record["replay"] = f"/assets/replays/{video.name}"
+                path.write_text(json.dumps(record, indent=2))
             verdict = f"solved in {record['ms'] / 1000:.1f}s" if record["solved"] else f"{record['placed']}/{record['total']} placed ({record['ended']})"
             print(f"{model_id}: {verdict}, {record['moves']} moves -> {path.name}")
-            if args.upload and model_id != "oracle" and not record["error"]:
+            if publish:
+                publish_replay(video)  # pushed first, so the leaderboard link works as soon as the result appears
                 upload(record)
-                print(f"{model_id}: uploaded")
+                print(f"{model_id}: uploaded, replay at {record['replay']}")
         browser.close()
 
 

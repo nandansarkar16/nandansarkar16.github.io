@@ -177,9 +177,14 @@ function deleteButton(fs, ref, label, refresh) {
   return del;
 }
 
-// A small copy of the photo with the pieces the model placed filled in
+// A small copy of the photo with the pieces the model placed filled in, plus its replay if it has one
 function runDetail(r) {
   const summary = el("p", {}, r.placed + "/" + r.total + " pieces · " + r.moves + " moves · " + fmt(r.ms));
+  if (/^\/assets\/replays\/[\w.-]+\.mp4$/.test(r.replay || "")) {
+    const watch = el("button", { type: "button", class: "lb-watch" }, "▶ Watch replay");
+    watch.addEventListener("click", () => openReplay(r));
+    summary.append(el("br"), watch);
+  }
   if (!Array.isArray(r.placed_map)) return el("div", { class: "lb-run-detail" }, summary);
   const grid = el("div", { class: "lb-mini", role: "img", "aria-label": r.placed + " of " + r.total + " pieces placed" });
   const n = Math.round(Math.sqrt(r.placed_map.length));
@@ -191,6 +196,21 @@ function runDetail(r) {
     grid.append(cell);
   });
   return el("div", { class: "lb-run-detail" }, grid, summary);
+}
+
+// Full-size player over the page; click outside the video or press Esc to close
+function openReplay(r) {
+  const video = el("video", { src: r.replay, autoplay: "", loop: "", muted: "", playsinline: "", controls: "" });
+  video.muted = true;
+  const close = el("button", { type: "button", class: "lb-modal-close", "aria-label": "Close replay" }, "×");
+  const modal = el("div", { class: "lb-modal", role: "dialog", "aria-modal": "true", "aria-label": r.name + " replay" },
+    el("div", { class: "lb-modal-box" }, el("p", {}, r.name + " · " + r.placed + "/" + r.total + " pieces · " + r.moves + " moves"), video, close));
+  const shut = () => { modal.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") shut(); };
+  modal.addEventListener("click", (e) => { if (e.target === modal || e.target === close) shut(); });
+  document.addEventListener("keydown", onKey);
+  document.body.append(modal);
+  close.focus();
 }
 
 function logo(r) {

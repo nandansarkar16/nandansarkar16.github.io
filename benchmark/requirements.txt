@@ -3,3 +3,5 @@ openai
 playwright
 pyyaml
 firebase-admin
+pillow
+imageio-ffmpeg
