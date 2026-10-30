@@ -4,10 +4,10 @@ The goal: a 6x6 photo puzzle of 36 pieces. Its empty spot is the wooden frame on
 
 The pieces: the 36 loose pieces sit in rows in the blank margins at the left and right edges of the page. All of them are already the right way up; you never need to rotate anything. Each piece has a 40x40 square body, plus tabs that stick out up to about 12 pixels on some sides. Pieces from the edges of the photo have a flat side, and the four corner pieces have two.
 
-How dragging works: drag(from_x, from_y, to_x, to_y) presses the mouse at the first point and releases it at the second. The piece moves by exactly that distance, so press on the center of the piece's square body (not on a tab) and release on the center of the cell where it belongs.
+How dragging works: drag(from_x, from_y, to_x, to_y, note) presses the mouse at the first point and releases it at the second. The piece moves by exactly that distance, so press on the center of the piece's square body (not on a tab) and release on the center of the cell where it belongs.
 
 Snapping: a piece locks into place if you drop its center within 16 pixels of its correct cell center, horizontally and vertically. A locked piece loses its drop shadow and can't be moved again. A piece dropped anywhere else just stays there and may cover other pieces or the ghost image, so don't drop pieces in the frame unless you're fairly confident. Moving a misplaced piece costs another move.
 
 Budget: you have [[moves]] drags and [[minutes]] minutes in total. You can make several drags per turn. Keep going until all 36 pieces are placed.
 
-Each turn starts fresh: you won't see earlier screenshots. Instead you get the current screenshot, the number of pieces placed, the moves and minutes left, your most recent drags with whether each piece locked in, and any note you wrote last turn. Use that note to remember your plan.
+Each turn starts fresh: you won't see earlier screenshots. Instead you get the current screenshot, the number of pieces placed, the moves and minutes left, your most recent drags with whether each piece locked in, and the note from your last drag. Every drag needs a note, and it's your only memory between turns, so use it: which pieces you think go in which cells, what you've already tried and ruled out, and what to do next.

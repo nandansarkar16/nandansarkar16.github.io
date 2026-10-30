@@ -12,20 +12,31 @@ import pathlib
 # The prompt lives with the website so the leaderboard can show visitors the exact text
 SYSTEM = (pathlib.Path(__file__).parent.parent / "_includes" / "benchmark-prompt.txt").read_text().strip()
 
+COORDS = ("from_x", "from_y", "to_x", "to_y")
 DRAG = {
     "name": "drag",
-    "description": "Press the mouse at (from_x, from_y) and release it at (to_x, to_y). Coordinates are screenshot pixels.",
+    "description": "Press the mouse at (from_x, from_y) and release it at (to_x, to_y). Coordinates are screenshot pixels. "
+                   "The note is your memory: it's shown to you next turn, since you won't see earlier screenshots.",
     "parameters": {
         "type": "object",
-        "properties": {k: {"type": "number"} for k in ("from_x", "from_y", "to_x", "to_y")},
-        "required": ["from_x", "from_y", "to_x", "to_y"],
+        "properties": {
+            **{k: {"type": "number"} for k in COORDS},
+            "note": {"type": "string", "description": "Notes for your next turn: which pieces go in which cells, "
+                                                      "what you've already tried and ruled out, and your plan."},
+        },
+        "required": [*COORDS, "note"],
         "additionalProperties": False,
     },
 }
 
 
 def valid(move):
-    return isinstance(move, dict) and all(isinstance(move.get(k), (int, float)) for k in DRAG["parameters"]["required"])
+    return isinstance(move, dict) and all(isinstance(move.get(k), (int, float)) for k in COORDS)
+
+
+def latest_note(moves):
+    """The note from the turn's last drag that has one; the harness shows it to the model next turn."""
+    return next((m["note"].strip() for m in reversed(moves) if isinstance(m.get("note"), str) and m["note"].strip()), "")
 
 
 # Each turn is a fresh, one-message request: instructions, a text recap and the current screenshot.
@@ -39,6 +50,7 @@ class AnthropicAgent:
         self.system = system
         self.input_tokens = self.output_tokens = 0
         self.replies = []  # the model's text, kept in the local results file to see why a run went the way it did
+        self.notes = []    # the note it attached to its drags each turn
 
     def next_moves(self, png, note):
         response = self.client.messages.create(
@@ -56,9 +68,10 @@ class AnthropicAgent:
         self.output_tokens += response.usage.output_tokens
         if response.stop_reason == "refusal":
             raise RuntimeError("model refused")
-        text = "\n".join(b.text for b in response.content if b.type == "text" and b.text.strip())
-        self.replies.append(text)
-        return [b.input for b in response.content if b.type == "tool_use" and valid(b.input)]
+        moves = [b.input for b in response.content if b.type == "tool_use" and valid(b.input)]
+        self.replies.append("\n".join(b.text for b in response.content if b.type == "text" and b.text.strip()))
+        self.notes.append(latest_note(moves))
+        return moves
 
 
 # OpenAI's chat completions API, which Google, OpenRouter (open models) and Ollama also accept
@@ -79,6 +92,7 @@ class ChatCompletionsAgent:
         self.system = system
         self.input_tokens = self.output_tokens = 0
         self.replies = []
+        self.notes = []
 
     def next_moves(self, png, note):
         response = self.client.chat.completions.create(
@@ -102,6 +116,7 @@ class ChatCompletionsAgent:
                 continue
             if valid(move):
                 moves.append(move)
+        self.notes.append(latest_note(moves))
         return moves
 
 
@@ -112,12 +127,15 @@ class OracleAgent:
         self.page = page
         self.input_tokens = self.output_tokens = 0
         self.replies = []
+        self.notes = []
 
     def next_moves(self, png, note):
         self.replies.append("")
-        for p in self.page.evaluate("window.puzzle.pieces()"):
+        for i, p in enumerate(self.page.evaluate("window.puzzle.pieces()")):
             if not p["placed"]:
-                return [{"from_x": p["x"], "from_y": p["y"], "to_x": p["hx"], "to_y": p["hy"]}]
+                self.notes.append(f"placing piece {i}")
+                return [{"from_x": p["x"], "from_y": p["y"], "to_x": p["hx"], "to_y": p["hy"], "note": f"placing piece {i}"}]
+        self.notes.append("")
         return []
 
 

@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 import agents
 
-HARNESS_VERSION = 5
+HARNESS_VERSION = 6
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -49,7 +49,7 @@ def run(model_id, entry, args, browser, path):
             "provider": entry["provider"], "api_model": entry.get("model", ""),
             "solved": status["solved"], "ms": round((time.monotonic() - start) * 1000), "placed": status["placed"], "total": status["total"],
             "placed_map": status["map"],
-            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "turns": turns,
+            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "notes": agent.notes, "turns": turns,
             "seed": args.seed, "ended": ended, "error": error, "harness_version": HARNESS_VERSION,
             "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         }
@@ -62,9 +62,9 @@ def run(model_id, entry, args, browser, path):
             lines.append("Your most recent drags, oldest first:")
             lines += [f"- ({m['from_x']:.0f}, {m['from_y']:.0f}) to ({m['to_x']:.0f}, {m['to_y']:.0f}): {'locked in' if ok else 'did not lock in'}"
                       for m, ok in recent[-10:]]
-        last_note = next((r for r in reversed(agent.replies) if r), "")
+        last_note = next((n for n in reversed(agent.notes) if n), "")
         if last_note:
-            lines.append("Your note from last turn: " + last_note[-800:])
+            lines.append("Your note from your last drag: " + last_note[-1500:])
         return "\n".join(lines)
 
     # Ends on: solved, the move cap, the time limit, or no drag for --idle-limit seconds
@@ -86,7 +86,7 @@ def run(model_id, entry, args, browser, path):
             else:
                 for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
                     before = status["placed"]
-                    drag(page, move)
+                    drag(page, move)  # the note rides along in the move; drag() only reads the coordinates
                     moves += 1
                     page.wait_for_timeout(150)  # a piece that snaps counts as placed right away
                     status = page.evaluate("window.puzzle.status()")
@@ -119,7 +119,7 @@ def upload(record):
     from firebase_admin import firestore
     if not firebase_admin._apps:
         firebase_admin.initialize_app()  # service account key from GOOGLE_APPLICATION_CREDENTIALS
-    firestore.client().collection("agents").add({k: v for k, v in record.items() if k not in ("replies", "turns")})
+    firestore.client().collection("agents").add({k: v for k, v in record.items() if k not in ("replies", "notes", "turns")})
 
 
 def main():
