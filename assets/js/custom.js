@@ -72,88 +72,97 @@
   var img = box && box.querySelector("img");
   if (!img || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  var GRID = 50;          // pieces per side
-  var SPREAD = 0.2;       // how far pieces drift past the photo edge, as a fraction of its size
-  var REST = 0.25;        // how scattered pieces are at rest (0 = whole photo, 1 = fully spread)
-  var LEAVE_DELAY = 400;  // ms before pieces start breaking up again
+  var BLOCKS = 8;       // photo is first cut into BLOCKS x BLOCKS squares...
+  var MAX_SPLITS = 3;   // ...then each is randomly quartered up to this many times, giving mixed piece sizes
+  var SPREAD = 0.2;     // canvas margin past the photo edge, as a fraction of its size
+  var REST = 0.25;      // how scattered pieces are at rest (0 = whole photo, 1 = fully spread)
+  var HOLD = 3500;      // ms the photo stays whole after the cursor leaves (or after a tap)
 
   var canvas = document.createElement("canvas");
   canvas.className = "photo-mosaic";
   canvas.setAttribute("aria-hidden", "true");
   var ctx = canvas.getContext("2d");
-  var pieces = [], size, pad, assembled = false, leaveTimer, last;
+  var src = document.createElement("canvas");  // photo pre-scaled to display size
+  var pieces = [], size, pad, dpr, assembled = false, holdTimer, last;
 
-  function setup() {
+  // Positions are fractions of the photo size, so a resize only rescales the canvases
+  function cut(x, y, s, depth) {
+    if (depth < MAX_SPLITS && Math.random() < 0.75 - depth * 0.15) {
+      var h = s / 2;
+      cut(x, y, h, depth + 1); cut(x + h, y, h, depth + 1);
+      cut(x, y + h, h, depth + 1); cut(x + h, y + h, h, depth + 1);
+      return;
+    }
+    var r = SPREAD * REST * Math.pow(Math.random(), 2), a = Math.random() * Math.PI * 2;
+    var ox = Math.cos(a) * r, oy = Math.sin(a) * r;
+    pieces.push({
+      hx: x, hy: y, s: s, ox: ox, oy: oy, x: x + ox, y: y + oy,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.05 + Math.random() * 0.07
+    });
+  }
+
+  function resize() {
     size = box.offsetWidth;
     pad = size * SPREAD;
-    var full = size + pad * 2, dpr = window.devicePixelRatio || 1;
+    dpr = window.devicePixelRatio || 1;
+    var full = size + pad * 2;
     canvas.style.width = canvas.style.height = full + "px";
     canvas.style.left = canvas.style.top = -pad + "px";
     canvas.width = canvas.height = Math.round(full * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    // Average the photo down to one color per piece
-    var sample = document.createElement("canvas");
-    sample.width = sample.height = GRID;
-    var sctx = sample.getContext("2d");
-    sctx.drawImage(img, 0, 0, GRID, GRID);
-    var data = sctx.getImageData(0, 0, GRID, GRID).data;
-
-    var cell = size / GRID, old = pieces;
-    pieces = [];
-    for (var i = 0; i < GRID * GRID; i++) {
-      var r = pad * REST * Math.pow(Math.random(), 2), a = Math.random() * Math.PI * 2;
-      var p = {
-        hx: pad + (i % GRID) * cell, hy: pad + Math.floor(i / GRID) * cell,
-        ox: Math.cos(a) * r, oy: Math.sin(a) * r,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.06 + Math.random() * 0.08,
-        color: "rgb(" + data[i * 4] + "," + data[i * 4 + 1] + "," + data[i * 4 + 2] + ")"
-      };
-      p.x = old[i] ? old[i].x * size / old[i].size : p.hx + p.ox;
-      p.y = old[i] ? old[i].y * size / old[i].size : p.hy + p.oy;
-      p.size = size;
-      pieces.push(p);
-    }
+    src.width = src.height = Math.round(size * dpr);
+    src.getContext("2d").drawImage(img, 0, 0, src.width, src.height);
   }
 
   function frame(t) {
     var dt = Math.min(t - (last || t), 100) / 16.7;  // frames elapsed at 60fps, so speed is refresh-rate independent
     last = t;
-    var cell = size / GRID, draw = cell - Math.max(0.6, cell * 0.15);
+    var S = src.width, settled = assembled;
     ctx.clearRect(0, 0, size + pad * 2, size + pad * 2);
     for (var i = 0; i < pieces.length; i++) {
       var p = pieces[i], tx = p.hx, ty = p.hy;
       if (!assembled) {
-        tx += p.ox + Math.sin(t / 900 + p.phase) * 1.5;
-        ty += p.oy + Math.cos(t / 1100 + p.phase) * 1.5;
+        tx += p.ox + Math.sin(t / 900 + p.phase) * 0.008;
+        ty += p.oy + Math.cos(t / 1100 + p.phase) * 0.008;
       }
       var k = 1 - Math.pow(1 - p.speed, dt);
       p.x += (tx - p.x) * k;
       p.y += (ty - p.y) * k;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, draw, draw);
+      if (Math.abs(p.x - p.hx) + Math.abs(p.y - p.hy) > 0.002) settled = false;
+      ctx.drawImage(src, p.hx * S, p.hy * S, p.s * S, p.s * S,
+                    pad + p.x * size, pad + p.y * size, p.s * size, p.s * size);
+    }
+    // Once every piece is home, draw the photo whole so no seams show between pieces
+    if (settled) {
+      ctx.clearRect(0, 0, size + pad * 2, size + pad * 2);
+      ctx.drawImage(src, pad, pad, size, size);
     }
     requestAnimationFrame(frame);
   }
 
-  function assemble() { clearTimeout(leaveTimer); assembled = true; }
-  function scatter()  { leaveTimer = setTimeout(function () { assembled = false; }, LEAVE_DELAY); }
+  function assemble() { clearTimeout(holdTimer); assembled = true; }
+  function scatterLater() {
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function () { assembled = false; }, HOLD);
+  }
 
   function start() {
-    setup();
+    for (var y = 0; y < BLOCKS; y++)
+      for (var x = 0; x < BLOCKS; x++) cut(x / BLOCKS, y / BLOCKS, 1 / BLOCKS, 0);
+    resize();
     box.appendChild(canvas);
     box.classList.add("is-mosaic");
     requestAnimationFrame(frame);
 
     box.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") assemble(); });
-    box.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") scatter(); });
+    box.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") scatterLater(); });
     box.addEventListener("pointerup", function (e) {
       if (e.pointerType === "mouse") return;
-      clearTimeout(leaveTimer);
-      assembled = !assembled;
+      assemble();
+      scatterLater();
     });
-    window.addEventListener("resize", function () { if (box.offsetWidth !== size) setup(); });
+    window.addEventListener("resize", function () { if (box.offsetWidth !== size) resize(); });
   }
 
   if (img.complete && img.naturalWidth) start();
