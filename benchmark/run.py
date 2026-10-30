@@ -18,7 +18,7 @@ from playwright.sync_api import sync_playwright
 import agents
 import replay
 
-HARNESS_VERSION = 7
+HARNESS_VERSION = 8
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -52,7 +52,7 @@ def run(model_id, entry, args, browser, path, recorder):
             "provider": entry["provider"], "api_model": entry.get("model", ""),
             "solved": status["solved"], "ms": round((time.monotonic() - start) * 1000), "placed": status["placed"], "total": status["total"],
             "placed_map": status["map"],
-            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "notes": agent.notes, "turns": turns,
+            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "notes": agent.notes, "turns": turns, "refusals": getattr(agent, "refusals", 0),
             "seed": args.seed, "ended": ended, "error": error, "harness_version": HARNESS_VERSION,
             "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         }

@@ -51,8 +51,24 @@ class AnthropicAgent:
         self.input_tokens = self.output_tokens = 0
         self.replies = []  # the model's text, kept in the local results file to see why a run went the way it did
         self.notes = []    # the note it attached to its drags each turn
+        self.refusals = 0  # turns the safety filters declined and were retried
 
     def next_moves(self, png, note):
+        # A refusal from the safety filters is usually a one-off false positive, so retry the same turn up to twice
+        for attempt in range(3):
+            response = self.request(png, note)
+            if response.stop_reason != "refusal":
+                break
+            self.refusals += 1
+        else:
+            category = getattr(response.stop_details, "category", None) if response.stop_details else None
+            raise RuntimeError(f"model refused 3 times in a row (category: {category})")
+        moves = [b.input for b in response.content if b.type == "tool_use" and valid(b.input)]
+        self.replies.append("\n".join(b.text for b in response.content if b.type == "text" and b.text.strip()))
+        self.notes.append(latest_note(moves))
+        return moves
+
+    def request(self, png, note):
         response = self.client.messages.create(
             model=self.entry["model"],
             max_tokens=16000,
@@ -66,12 +82,7 @@ class AnthropicAgent:
         )
         self.input_tokens += response.usage.input_tokens + (response.usage.cache_read_input_tokens or 0) + (response.usage.cache_creation_input_tokens or 0)
         self.output_tokens += response.usage.output_tokens
-        if response.stop_reason == "refusal":
-            raise RuntimeError("model refused")
-        moves = [b.input for b in response.content if b.type == "tool_use" and valid(b.input)]
-        self.replies.append("\n".join(b.text for b in response.content if b.type == "text" and b.text.strip()))
-        self.notes.append(latest_note(moves))
-        return moves
+        return response
 
 
 # OpenAI's chat completions API, which Google, OpenRouter (open models) and Ollama also accept
