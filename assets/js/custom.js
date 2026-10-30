@@ -164,14 +164,14 @@
     return { x: r.left + window.scrollX + p.col * cell, y: r.top + window.scrollY + p.row * cell };
   }
 
-  // Drop every piece at a random spot in its own floating area
+  // Send every piece flying to a random spot in its own floating area
   function shuffle() {
     pieces.forEach(function (p) {
       var z = p.zone();
-      p.state = "floating";
-      p.x = z.x0 + Math.random() * (z.x1 - z.x0);
-      p.y = z.y0 + Math.random() * (z.y1 - z.y0);
-      p.a = (Math.random() * 2 - 1) * 0.5;
+      p.state = "scattering";
+      p.tx = z.x0 + Math.random() * (z.x1 - z.x0);
+      p.ty = z.y0 + Math.random() * (z.y1 - z.y0);
+      p.ta = (Math.random() * 2 - 1) * 0.5;
       p.el.classList.remove("is-placed");
     });
   }
@@ -196,6 +196,9 @@
           p.state = "placed";
           p.el.classList.add("is-placed");
         }
+      } else if (p.state === "scattering") {
+        p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; p.a += (p.ta - p.a) * k;
+        if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) < 0.5) p.state = "floating";
       } else if (p.state === "floating") {
         var z = p.zone(), wob = Math.sin(t / 2000 + p.phase) * 0.02;
         p.x += p.vx * dt; p.y += p.vy * dt; p.a += (p.va + wob * 0.01) * dt;
@@ -271,8 +274,9 @@
     }
     render();
     findZones();
-    shuffle();
+    pieces.forEach(function (p) { var h = home(p); p.x = h.x; p.y = h.y; });
     requestAnimationFrame(tick);
+    setTimeout(shuffle, 600);  // show the whole photo briefly, then break apart
 
     controls.addEventListener("click", function (e) {
       var act = e.target.getAttribute("data-act");
