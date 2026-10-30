@@ -4,7 +4,9 @@
 import { firebaseConfig } from "./firebase-config.js";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
-const LOGOS = "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/";
+// Brand-colored logos, falling back to an older Simple Icons release (it still has OpenAI's), then a letter
+const LOGOS = ["https://cdn.simpleicons.org/", "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/"];
+const PHOTO = "/images/profile.png";
 const board = document.getElementById("leaderboard");
 const box = document.getElementById("profilePhoto");
 // Accounts that can delete leaderboard entries; firestore.rules has the same list
@@ -32,7 +34,7 @@ if (board) {
   });
 }
 
-let refreshHumans = () => {};
+let refreshHumans = () => {}, refreshAgents = () => {};
 let me = null;  // the signed-in user, if any
 
 if (firebaseConfig) {  // without a config the leaderboard stays hidden
@@ -106,7 +108,7 @@ function race(auth, authApi, fs, db) {
     render();
     if (user && timed && !solved.assisted) saveScore(solved.ms);
   });
-  auth.onAuthStateChanged(authApi, (u) => { user = me = u; render(); refreshHumans(); });
+  auth.onAuthStateChanged(authApi, (u) => { user = me = u; render(); refreshHumans(); refreshAgents(); });
 }
 
 /* ── Leaderboard under the photo ── */
@@ -117,14 +119,9 @@ async function showBoard(fs, db) {
   refreshHumans = async () => {
     try {
       const snap = await fs.getDocs(fs.query(fs.collection(db, "scores"), fs.orderBy("ms"), fs.limit(10)));
-      const admin = me && me.emailVerified && ADMINS.includes(me.email);
       const rows = snap.docs.map((d, i) => {
         const s = d.data(), name = el("td", {}, s.name);
-        if (admin) {
-          const del = el("button", { type: "button", class: "lb-delete", title: "Delete this entry", "aria-label": "Delete " + s.name }, "×");
-          del.addEventListener("click", () => fs.deleteDoc(d.ref).then(refreshHumans, (e) => console.error("Delete failed:", e)));
-          name.append(del);
-        }
+        if (isAdmin()) name.append(deleteButton(fs, d.ref, s.name, refreshHumans));
         return el("tr", {}, el("td", {}, String(i + 1)), name, el("td", { class: "lb-time" }, fmt(s.ms)));
       });
       humans.replaceChildren(rows.length ? table(["#", "Name", "Time"], rows) : el("p", { class: "lb-empty" }, "No times yet. Be the first!"));
@@ -134,30 +131,78 @@ async function showBoard(fs, db) {
   };
   refreshHumans();
 
-  try {
-    // Every benchmark run is stored; show each model's best: solved runs by time, then unsolved by pieces placed
-    const best = new Map();
-    (await fs.getDocs(fs.collection(db, "agents"))).forEach((d) => {
-      const r = d.data(), cur = best.get(r.model);
-      const better = !cur || (r.solved && (!cur.solved || r.ms < cur.ms)) || (!r.solved && !cur.solved && r.placed > cur.placed);
-      if (better) best.set(r.model, r);
-    });
-    const runs = [...best.values()].sort((a, b) => (b.solved - a.solved) || (a.solved ? a.ms - b.ms : b.placed - a.placed));
-    const rows = runs.map((r, i) => el("tr", {},
-      el("td", {}, r.solved ? String(i + 1) : "–"),
-      el("td", {}, logo(r), r.name),
-      el("td", { class: "lb-time" }, r.solved ? fmt(r.ms) : r.placed + "/" + r.total)));
-    agents.replaceChildren(rows.length ? table(["#", "Model", "Time"], rows) : el("p", { class: "lb-empty" }, "No benchmark runs yet."));
-  } catch (e) {
-    agents.replaceChildren(el("p", { class: "lb-empty" }, "Couldn't load the benchmark."));
-  }
+  refreshAgents = async () => {
+    try {
+      // Every benchmark run is stored; show each model's best: solved runs by time, then unsolved by pieces placed
+      const best = new Map();
+      (await fs.getDocs(fs.collection(db, "agents"))).forEach((d) => {
+        const r = { ...d.data(), ref: d.ref }, cur = best.get(r.model);
+        const better = !cur || (r.solved && (!cur.solved || r.ms < cur.ms)) || (!r.solved && !cur.solved && r.placed > cur.placed);
+        if (better) best.set(r.model, r);
+      });
+      const runs = [...best.values()].sort((a, b) => (b.solved - a.solved) || (a.solved ? a.ms - b.ms : b.placed - a.placed));
+      const rows = runs.flatMap((r, i) => {
+        const name = el("td", {}, logo(r), r.name);
+        if (isAdmin()) name.append(deleteButton(fs, r.ref, r.name, refreshAgents));
+        const row = el("tr", { class: "lb-run", tabindex: "0", "aria-expanded": "false" },
+          el("td", {}, r.solved ? String(i + 1) : "–"), name,
+          el("td", { class: "lb-time" }, r.solved ? fmt(r.ms) : r.placed + "/" + r.total));
+        // Click a model to see which pieces it placed
+        const detail = el("tr", { class: "lb-detail", hidden: "" }, el("td", { colspan: "3" }, runDetail(r)));
+        const toggle = (e) => {
+          if (e.target.closest(".lb-delete") || (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")) return;
+          e.preventDefault();
+          detail.hidden = !detail.hidden;
+          row.setAttribute("aria-expanded", String(!detail.hidden));
+        };
+        row.addEventListener("click", toggle);
+        row.addEventListener("keydown", toggle);
+        return [row, detail];
+      });
+      agents.replaceChildren(rows.length ? table(["#", "Model", "Time"], rows) : el("p", { class: "lb-empty" }, "No benchmark runs yet."));
+    } catch (e) {
+      agents.replaceChildren(el("p", { class: "lb-empty" }, "Couldn't load the benchmark."));
+    }
+  };
+  refreshAgents();
+}
+
+function isAdmin() {
+  return !!(me && me.emailVerified && ADMINS.includes(me.email));
+}
+
+function deleteButton(fs, ref, label, refresh) {
+  const del = el("button", { type: "button", class: "lb-delete", title: "Delete this entry", "aria-label": "Delete " + label }, "×");
+  del.addEventListener("click", () => fs.deleteDoc(ref).then(refresh, (e) => console.error("Delete failed:", e)));
+  return del;
+}
+
+// A small copy of the photo with the pieces the model placed filled in
+function runDetail(r) {
+  const summary = el("p", {}, r.placed + "/" + r.total + " pieces · " + r.moves + " moves · " + fmt(r.ms));
+  if (!Array.isArray(r.placed_map)) return el("div", { class: "lb-run-detail" }, summary);
+  const grid = el("div", { class: "lb-mini", role: "img", "aria-label": r.placed + " of " + r.total + " pieces placed" });
+  const n = Math.round(Math.sqrt(r.placed_map.length));
+  r.placed_map.forEach((on, i) => {
+    const cell = el("span", { class: on ? "" : "is-off" });
+    cell.style.backgroundImage = "url(" + PHOTO + ")";
+    cell.style.backgroundSize = n * 100 + "%";
+    cell.style.backgroundPosition = (i % n) * 100 / (n - 1) + "% " + Math.floor(i / n) * 100 / (n - 1) + "%";
+    grid.append(cell);
+  });
+  return el("div", { class: "lb-run-detail" }, grid, summary);
 }
 
 function logo(r) {
   const badge = el("span", { class: "lb-logo lb-logo-text", "aria-hidden": "true" }, (r.company || "?").charAt(0));
   if (!/^[a-z0-9]+$/.test(r.logo || "")) return badge;
-  const img = el("img", { class: "lb-logo", src: LOGOS + r.logo + ".svg", alt: "" });
-  img.addEventListener("error", () => img.replaceWith(badge));
+  let tries = 0;
+  const img = el("img", { class: "lb-logo", src: LOGOS[0] + r.logo, alt: "" });
+  img.addEventListener("error", () => {
+    tries++;
+    if (tries < LOGOS.length) img.src = LOGOS[tries] + r.logo + ".svg";
+    else img.replaceWith(badge);
+  });
   return img;
 }
 

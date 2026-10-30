@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 import agents
 
-HARNESS_VERSION = 1
+HARNESS_VERSION = 2
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -34,10 +34,13 @@ def run(model_id, entry, args, browser):
     page.wait_for_function("window.puzzle && window.puzzle.pieces")
     time.sleep(SETTLE)
 
-    agent = agents.make(entry, page)
+    x0, y0 = page.evaluate("(() => { const r = document.querySelector('#profilePhoto img').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)]; })()")
+    system = agents.SYSTEM.format(x0=x0, y0=y0, moves=args.max_moves, minutes=round(args.time_limit / 60))
+    agent = agents.make(entry, page, system)
     moves, idle_turns, error = 0, 0, None
     status = page.evaluate("window.puzzle.status()")
-    note = f"Here is the puzzle. {status['placed']}/{status['total']} pieces placed."
+    left = lambda: f"{status['placed']}/{status['total']} pieces placed, {args.max_moves - moves} moves left."
+    note = "Here is the puzzle. " + left()
     start = time.monotonic()  # the clock includes model thinking and API time
     try:
         while not status["solved"] and moves < args.max_moves and time.monotonic() - start < args.time_limit:
@@ -46,15 +49,15 @@ def run(model_id, entry, args, browser):
                 idle_turns += 1
                 if idle_turns > 3:
                     break
-                note = f"You didn't drag anything. {status['placed']}/{status['total']} pieces placed. Keep going until all are placed."
+                note = "You didn't drag anything. " + left() + " Keep going until all are placed."
                 continue
             idle_turns = 0
-            for move in requested:
+            for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
                 drag(page, move)
                 moves += 1
             time.sleep(SETTLE)
             status = page.evaluate("window.puzzle.status()")
-            note = f"{status['placed']}/{status['total']} pieces placed."
+            note = left()
             print(f"  {model_id}: {moves} moves, {note}")
     except Exception as e:  # an API failure ends the run; it's saved locally but never uploaded
         error = f"{type(e).__name__}: {e}"
@@ -66,6 +69,7 @@ def run(model_id, entry, args, browser):
         "model": model_id, "name": entry["name"], "company": entry["company"], "logo": entry.get("logo", ""),
         "provider": entry["provider"], "api_model": entry.get("model", ""),
         "solved": status["solved"], "ms": round(elapsed * 1000), "placed": status["placed"], "total": status["total"],
+        "placed_map": status["map"],
         "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens,
         "seed": args.seed, "error": error, "harness_version": HARNESS_VERSION,
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -85,8 +89,8 @@ def main():
     parser.add_argument("models", nargs="+", help="ids from models.yaml, or 'oracle'")
     parser.add_argument("--url", default="https://nandansarkar16.github.io/")
     parser.add_argument("--seed", type=int, default=1, help="puzzle layout; keep it the same across models")
-    parser.add_argument("--max-moves", type=int, default=200)
-    parser.add_argument("--time-limit", type=int, default=1800, help="seconds")
+    parser.add_argument("--max-moves", type=int, default=100)
+    parser.add_argument("--time-limit", type=int, default=1200, help="seconds")
     parser.add_argument("--upload", action="store_true", help="publish results to the leaderboard")
     parser.add_argument("--headed", action="store_true", help="show the browser window")
     args = parser.parse_args()

@@ -46,7 +46,7 @@ service cloud.firestore {
     // Agent benchmark runs: written only by the benchmark harness, which uses admin credentials
     match /agents/{run} {
       allow read: if true;
-      allow write: if false;
+      allow delete: if isAdmin();
     }
   }
 }

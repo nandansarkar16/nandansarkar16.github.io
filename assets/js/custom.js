@@ -333,7 +333,8 @@
     window.puzzle = {
       status: function () {
         var placed = pieces.filter(function (p) { return p.state === "placed"; }).length;
-        return { total: pieces.length, placed: placed, solved: placed === pieces.length };
+        return { total: pieces.length, placed: placed, solved: placed === pieces.length,
+                 map: pieces.map(function (p) { return p.state === "placed"; }) };  // row by row from the top-left
       }
     };
     if (BENCH) {  // piece centers in viewport coordinates, used only by the harness's scripted "oracle" solver

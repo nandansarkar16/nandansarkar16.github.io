@@ -411,7 +411,44 @@ img { display: block; max-width: 100%; }
 
 .lb-delete:hover { color: #dc2626; }
 
-.lb-logo { display: inline-block; width: 14px; height: 14px; margin-right: 0.35rem; vertical-align: -2px; }
+/* The extra selectors beat the profile photo's own img rules */
+.profile-photo .lb img.lb-logo,
+.lb-logo {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 0.35rem;
+  vertical-align: -2px;
+  opacity: 1;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+}
+
+.lb-run { cursor: pointer; }
+.lb-run:hover td { background: var(--surface); }
+.lb-detail td { padding-top: 0.2rem; }
+.lb-run-detail { display: flex; align-items: center; gap: 0.7rem; }
+.lb-run-detail p { margin: 0; font-size: 0.72rem; color: var(--text-muted); }
+
+.lb-mini {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border: 2px solid #a8723f;
+  border-radius: 3px;
+  background: #5c3a1e;
+}
+
+.lb-mini span { background-repeat: no-repeat; }
+.lb-mini span.is-off { opacity: 0.12; }
+
+.lb-info { margin: 0 0 0.5rem; font-size: 0.72rem; color: var(--text-muted); }
+.lb-info summary { cursor: pointer; width: fit-content; }
+.lb-info summary::before { content: "\24D8\00A0"; }
+.lb-info p { margin: 0.35rem 0 0; line-height: 1.5; }
 .lb-logo-text {
   border-radius: 4px;
   background: var(--accent-bg);

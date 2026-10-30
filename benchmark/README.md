@@ -3,7 +3,7 @@
 The photo puzzle on the home page has a leaderboard right under the photo, with two tabs:
 
 - **Humans**: people sign in with Google on the home page, press Shuffle, and their solve time is saved.
-- **AI agents**: models solve the same puzzle from screenshots using one `drag` tool, run by `run.py` here.
+- **AI**: models solve the same puzzle from screenshots using one `drag` tool, run by `run.py` here.
 
 Benchmark mode is the home page with `?bench&seed=N`: pieces don't move, they sit on a shuffled
 non-overlapping grid that's the same for every model given the same seed, and the Solve/Shuffle buttons are hidden.
@@ -48,7 +48,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=~/keys/puzzle-firebase.json
 Every run is saved to `results/` as JSON. `--upload` publishes it; runs that end in an API error are never uploaded.
 The leaderboard shows each model's best run: solved runs ranked by time, then unsolved runs by pieces placed.
 
-Options: `--seed` (keep it the same across models), `--max-moves` (default 200), `--time-limit` seconds (default 1800),
+Options: `--seed` (keep it the same across models), `--max-moves` (default 100), `--time-limit` seconds (default 1200),
 `--headed` to watch the browser, `--url` to test a local copy of the site.
 
 ## Adding models

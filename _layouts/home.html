@@ -127,7 +127,11 @@
             </div>
             <div data-panel="humans"><div class="lb-body"><p class="lb-empty">Loading…</p></div></div>
             <div data-panel="agents" hidden>
-              <p class="lb-note">Models solving the same puzzle from screenshots, with frozen pieces.</p>
+              <p class="lb-note">Each model gets 100 moves and 20 minutes. Click a model to see what it solved.</p>
+              <details class="lb-info">
+                <summary>How this works</summary>
+                <p>Each model sees only screenshots of this page and can only drag pieces with the mouse; it never sees the site's code. Every model gets the same layout with pieces that don't move, plus the frame's position on screen. A piece locks in when dropped within 16 pixels of its spot, the same rule as for people. Time runs from the first screenshot to the last piece, so it includes the model's thinking and its API's speed.</p>
+              </details>
               <div class="lb-body"><p class="lb-empty">Loading…</p></div>
             </div>
           </div>
