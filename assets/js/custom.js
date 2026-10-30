@@ -77,14 +77,30 @@
   var SNAP = 0.4;       // a piece snaps home when dropped within this fraction of a piece of its spot
   var GAP = 12;         // px kept between floating pieces and the page content
 
+  // Benchmark mode (?bench&seed=N): pieces don't move, the layout is the same every run, no Solve button
+  var params = new URLSearchParams(location.search);
+  var BENCH = params.has("bench");
+  var rand = BENCH ? seeded(parseInt(params.get("seed"), 10) || 1) : Math.random;
+  function seeded(s) {  // mulberry32
+    return function () {
+      s = (s + 0x6D2B79F5) | 0;
+      var t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
   var frame = document.createElement("div");  // wooden frame the photo sits in
   frame.className = "puzzle-frame";
   var controls = document.createElement("div");
   controls.className = "puzzle-controls";
   controls.innerHTML = '<button type="button" data-act="solve">Solve</button>' +
-                       '<button type="button" data-act="shuffle">Shuffle</button>';
+                       '<button type="button" data-act="shuffle">Shuffle</button>' +
+                       '<span class="puzzle-timer"></span>';
+  var timer = controls.querySelector(".puzzle-timer");
   var src = document.createElement("canvas");  // photo pre-scaled to display size, with a margin for tabs
   var pieces = [], size, cell, tab, m, dpr, zones = [], last;
+  var run = null;  // the current timed attempt: { start, moves, assisted }
 
   // One side of a piece from (x0,y0) to (x1,y1); sign 1 = tab out, -1 = tab in, 0 = flat border
   var CURVE = [[0.35, 0, 0.40, 0, 0.42, 0.05, 0.38, 0.12], [0.33, 0.22, 0.42, 0.28, 0.50, 0.28],
@@ -164,22 +180,47 @@
     return { x: r.left + window.scrollX + p.col * cell, y: r.top + window.scrollY + p.row * cell };
   }
 
+  // Benchmark layout: a shuffled grid of slots in the floating areas, so no piece hides another
+  function benchSlots() {
+    var step = cell + m * 2 + 6, slots = [];
+    zones.forEach(function (z) {
+      for (var y = z.y0; y <= z.y1; y += step)
+        for (var x = z.x0; x <= z.x1; x += step) slots.push([x, y]);
+    });
+    for (var i = slots.length - 1; i > 0; i--) {
+      var j = Math.floor(rand() * (i + 1)), t = slots[i];
+      slots[i] = slots[j]; slots[j] = t;
+    }
+    return slots.length >= pieces.length ? slots : null;
+  }
+
   // Send every piece flying to a random spot in its own floating area
   function shuffle() {
-    pieces.forEach(function (p) {
+    var slots = BENCH && benchSlots();
+    pieces.forEach(function (p, i) {
       var z = p.zone();
       p.state = "scattering";
-      p.tx = z.x0 + Math.random() * (z.x1 - z.x0);
-      p.ty = z.y0 + Math.random() * (z.y1 - z.y0);
-      p.ta = (Math.random() * 2 - 1) * 0.5;
+      p.tx = z.x0 + rand() * (z.x1 - z.x0);
+      p.ty = z.y0 + rand() * (z.y1 - z.y0);
+      p.ta = BENCH ? 0 : (rand() * 2 - 1) * 0.5;
+      if (slots) { p.tx = slots[i][0]; p.ty = slots[i][1]; }
+      if (BENCH) { p.state = "floating"; p.x = p.tx; p.y = p.ty; p.a = 0; }
       p.el.classList.remove("is-placed");
     });
+    run = { start: performance.now(), moves: 0, assisted: false };
+    document.dispatchEvent(new CustomEvent("puzzle:start"));
+  }
+
+  function fmt(ms) {
+    var sec = ms / 1000;
+    return sec < 60 ? sec.toFixed(1) + "s" : Math.floor(sec / 60) + ":" + ("0" + (sec % 60).toFixed(1)).slice(-4);
   }
 
   function solve() {
     pieces.forEach(function (p) {
       if (p.state !== "placed") p.state = "flying";
     });
+    if (run) run.assisted = true;
   }
 
   function tick(t) {
@@ -199,7 +240,7 @@
       } else if (p.state === "scattering") {
         p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; p.a += (p.ta - p.a) * k;
         if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) < 0.5) p.state = "floating";
-      } else if (p.state === "floating") {
+      } else if (p.state === "floating" && !BENCH) {
         var z = p.zone(), wob = Math.sin(t / 2000 + p.phase) * 0.02;
         p.x += p.vx * dt; p.y += p.vy * dt; p.a += (p.va + wob * 0.01) * dt;
         if (p.x < z.x0 || p.x > z.x1) { p.vx = Math.abs(p.vx) * (p.x < z.x0 ? 1 : -1); p.x = Math.min(Math.max(p.x, z.x0), z.x1); }
@@ -212,6 +253,14 @@
     // Once every piece is home, show the real photo so no seams or outlines remain
     box.classList.toggle("is-solved", done);
     document.body.classList.toggle("puzzle-solved", done);
+    if (run) {
+      var ms = performance.now() - run.start;
+      timer.textContent = run.assisted ? "" : fmt(ms);
+      if (done) {
+        document.dispatchEvent(new CustomEvent("puzzle:solved", { detail: { ms: Math.round(ms), moves: run.moves, assisted: run.assisted } }));
+        run = null;
+      }
+    }
     requestAnimationFrame(tick);
   }
 
@@ -228,6 +277,7 @@
       p.el.removeEventListener("pointerup", drop);
       p.el.removeEventListener("pointercancel", drop);
       p.el.classList.remove("is-dragging");
+      if (run) run.moves++;
       var h = home(p);
       if (Math.abs(p.x - h.x) < cell * SNAP && Math.abs(p.y - h.y) < cell * SNAP) {
         p.state = "flying";
@@ -243,18 +293,18 @@
   function start() {
     img.parentNode.insertBefore(frame, img);
     frame.appendChild(img);
-    box.appendChild(controls);
+    if (!BENCH) box.appendChild(controls);
     box.classList.add("is-puzzle");
 
     // Each inner edge gets a random tab direction; neighbours share it with opposite sign
     var flipH = [], flipV = [];
     for (var i = 0; i < GRID * GRID; i++) {
-      flipH.push(Math.random() < 0.5 ? 1 : -1);
-      flipV.push(Math.random() < 0.5 ? 1 : -1);
+      flipH.push(rand() < 0.5 ? 1 : -1);
+      flipV.push(rand() < 0.5 ? 1 : -1);
     }
     for (var row = 0; row < GRID; row++) {
       for (var col = 0; col < GRID; col++) {
-        var el = document.createElement("canvas"), a = Math.random() * Math.PI * 2, sp = DRIFT * (0.4 + Math.random() * 0.6);
+        var el = document.createElement("canvas"), a = rand() * Math.PI * 2, sp = DRIFT * (0.4 + rand() * 0.6);
         el.className = "puzzle-piece";
         el.setAttribute("aria-hidden", "true");
         var p = {
@@ -263,8 +313,8 @@
           bottom: row === GRID - 1 ? 0 : flipH[row * GRID + col],
           left:   col === 0 ? 0 : -flipV[row * GRID + col - 1],
           right:  col === GRID - 1 ? 0 : flipV[row * GRID + col],
-          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, va: (Math.random() * 2 - 1) * 0.004,
-          phase: Math.random() * Math.PI * 2, zi: Math.random()
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, va: (rand() * 2 - 1) * 0.004,
+          phase: rand() * Math.PI * 2, zi: rand()
         };
         p.zone = function () { return zones[Math.floor(this.zi * zones.length)]; };
         el.addEventListener("pointerdown", drag.bind(null, p));
@@ -276,7 +326,25 @@
     findZones();
     pieces.forEach(function (p) { var h = home(p); p.x = h.x; p.y = h.y; });
     requestAnimationFrame(tick);
-    setTimeout(shuffle, 600);  // show the whole photo briefly, then break apart
+    if (BENCH) shuffle();
+    else setTimeout(shuffle, 600);  // show the whole photo briefly, then break apart
+
+    // Read-only status for the leaderboard and the agent benchmark harness
+    window.puzzle = {
+      status: function () {
+        var placed = pieces.filter(function (p) { return p.state === "placed"; }).length;
+        return { total: pieces.length, placed: placed, solved: placed === pieces.length };
+      }
+    };
+    if (BENCH) {  // piece centers in viewport coordinates, used only by the harness's scripted "oracle" solver
+      window.puzzle.pieces = function () {
+        return pieces.map(function (p) {
+          var h = home(p);
+          return { x: p.x + cell / 2 - scrollX, y: p.y + cell / 2 - scrollY,
+                   hx: h.x + cell / 2 - scrollX, hy: h.y + cell / 2 - scrollY, placed: p.state === "placed" };
+        });
+      };
+    }
 
     controls.addEventListener("click", function (e) {
       var act = e.target.getAttribute("data-act");

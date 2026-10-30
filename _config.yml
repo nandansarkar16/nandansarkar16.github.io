@@ -156,6 +156,8 @@ include:
   - _pages
   - files
 exclude:
+  - benchmark
+  - firestore.rules
   - "*.sublime-project"
   - "*.sublime-workspace"
   - .asset-cache

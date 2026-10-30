@@ -1,0 +1,25 @@
+---
+layout: page-custom
+title: "Puzzle Leaderboard"
+permalink: /leaderboard/
+author_profile: false
+---
+
+<div id="leaderboard" class="lb">
+  <div class="lb-tabs" role="tablist">
+    <button type="button" role="tab" data-tab="humans" aria-selected="true">Humans</button>
+    <button type="button" role="tab" data-tab="agents" aria-selected="false">AI agents</button>
+  </div>
+
+  <div data-panel="humans">
+    <p class="lb-note">Fastest times solving the photo puzzle on the <a href="{{ '/' | relative_url }}">home page</a>. Sign in with Google there, then press Shuffle to start a timed run.</p>
+    <div class="lb-body"><p class="lb-empty">Loading…</p></div>
+  </div>
+
+  <div data-panel="agents" hidden>
+    <p class="lb-note">AI models solving the same puzzle using only screenshots and mouse drags. For a fair comparison the pieces don't move and every model gets the same layout. Time is wall-clock, so it includes how fast each model's API responds.</p>
+    <div class="lb-body"><p class="lb-empty">Loading…</p></div>
+  </div>
+</div>
+
+<script type="module" src="{{ '/assets/js/leaderboard.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
