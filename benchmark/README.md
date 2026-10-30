@@ -1,6 +1,6 @@
 # Puzzle leaderboard and agent benchmark
 
-The photo puzzle on the home page has a leaderboard at `/leaderboard/` with two tabs:
+The photo puzzle on the home page has a leaderboard right under the photo, with two tabs:
 
 - **Humans**: people sign in with Google on the home page, press Shuffle, and their solve time is saved.
 - **AI agents**: models solve the same puzzle from screenshots using one `drag` tool, run by `run.py` here.

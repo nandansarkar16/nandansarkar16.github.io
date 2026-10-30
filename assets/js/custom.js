@@ -293,7 +293,7 @@
   function start() {
     img.parentNode.insertBefore(frame, img);
     frame.appendChild(img);
-    if (!BENCH) box.appendChild(controls);
+    if (!BENCH) frame.after(controls);
     box.classList.add("is-puzzle");
 
     // Each inner edge gets a random tab direction; neighbours share it with opposite sign

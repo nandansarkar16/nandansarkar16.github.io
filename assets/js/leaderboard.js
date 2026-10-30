@@ -20,7 +20,7 @@ function el(tag, attrs, ...children) {
   return node;
 }
 
-/* ── Tabs on the leaderboard page work even before Firebase is set up ── */
+/* ── Leaderboard tabs ── */
 if (board) {
   board.querySelectorAll("[data-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -30,17 +30,17 @@ if (board) {
   });
 }
 
-if (!firebaseConfig) {
-  if (board) board.querySelectorAll(".lb-body").forEach((b) => b.replaceChildren(el("p", { class: "lb-empty" }, "The leaderboard is coming soon.")));
-} else {
+let refreshHumans = () => {};
+
+if (firebaseConfig) {  // without a config the leaderboard stays hidden
   const [{ initializeApp }, auth, fs] = await Promise.all([
     import(SDK + "firebase-app.js"), import(SDK + "firebase-auth.js"), import(SDK + "firebase-firestore.js"),
   ]);
   const app = initializeApp(firebaseConfig);
   const db = fs.getFirestore(app);
   const authApi = auth.getAuth(app);
+  if (board) { board.hidden = false; showBoard(fs, db); }
   if (box) race(auth, authApi, fs, db);
-  if (board) showBoard(fs, db);
 }
 
 /* ── Home page: sign in, time a run from Shuffle to solved, save the best time ── */
@@ -49,7 +49,7 @@ function race(auth, authApi, fs, db) {
   let user = null, timed = false, solved = null;
 
   function render() {
-    const lb = el("a", { href: "/leaderboard/" }, "leaderboard");
+    const lb = el("a", { href: "#leaderboard" }, "leaderboard");
     if (solved && user && timed && !solved.assisted) {
       const input = el("input", { type: "text", maxlength: "30", placeholder: "Your name", "aria-label": "Name for the leaderboard" });
       input.value = localStorage.getItem("puzzleName") || (user.displayName || "").split(" ")[0];
@@ -87,14 +87,15 @@ function race(auth, authApi, fs, db) {
         return;
       }
       await fs.setDoc(ref, { name, ms, at: fs.serverTimestamp() });
-      panel.replaceChildren(el("p", {}, "Saved! See where you rank on the ", el("a", { href: "/leaderboard/" }, "leaderboard"), "."));
+      panel.replaceChildren(el("p", {}, "Saved! Your time is on the leaderboard below."));
+      refreshHumans();
     } catch (e) {
       panel.replaceChildren(el("p", {}, "Couldn't save that time. Shuffle and try another run."));
     }
   }
 
   document.addEventListener("puzzle:start", () => {
-    if (!panel.isConnected) box.append(panel);
+    if (!panel.isConnected) (board ? board.before(panel) : box.append(panel));
     solved = null;
     timed = false;
     // The server clock stamps the start; the database rules check the saved time against it
@@ -105,21 +106,24 @@ function race(auth, authApi, fs, db) {
   auth.onAuthStateChanged(authApi, (u) => { user = u; render(); });
 }
 
-/* ── Leaderboard page ── */
+/* ── Leaderboard under the photo ── */
 async function showBoard(fs, db) {
   const humans = board.querySelector('[data-panel="humans"] .lb-body');
   const agents = board.querySelector('[data-panel="agents"] .lb-body');
 
-  try {
-    const snap = await fs.getDocs(fs.query(fs.collection(db, "scores"), fs.orderBy("ms"), fs.limit(100)));
-    const rows = snap.docs.map((d, i) => {
-      const s = d.data();
-      return el("tr", {}, el("td", {}, String(i + 1)), el("td", {}, s.name), el("td", { class: "lb-time" }, fmt(s.ms)));
-    });
-    humans.replaceChildren(rows.length ? table(["#", "Name", "Time"], rows) : el("p", { class: "lb-empty" }, "No times yet. Be the first!"));
-  } catch (e) {
-    humans.replaceChildren(el("p", { class: "lb-empty" }, "Couldn't load the leaderboard."));
-  }
+  refreshHumans = async () => {
+    try {
+      const snap = await fs.getDocs(fs.query(fs.collection(db, "scores"), fs.orderBy("ms"), fs.limit(10)));
+      const rows = snap.docs.map((d, i) => {
+        const s = d.data();
+        return el("tr", {}, el("td", {}, String(i + 1)), el("td", {}, s.name), el("td", { class: "lb-time" }, fmt(s.ms)));
+      });
+      humans.replaceChildren(rows.length ? table(["#", "Name", "Time"], rows) : el("p", { class: "lb-empty" }, "No times yet. Be the first!"));
+    } catch (e) {
+      humans.replaceChildren(el("p", { class: "lb-empty" }, "Couldn't load the leaderboard."));
+    }
+  };
+  refreshHumans();
 
   try {
     // Every benchmark run is stored; show each model's best: solved runs by time, then unsolved by pieces placed
@@ -132,11 +136,9 @@ async function showBoard(fs, db) {
     const runs = [...best.values()].sort((a, b) => (b.solved - a.solved) || (a.solved ? a.ms - b.ms : b.placed - a.placed));
     const rows = runs.map((r, i) => el("tr", {},
       el("td", {}, r.solved ? String(i + 1) : "–"),
-      el("td", {}, logo(r), r.company),
-      el("td", {}, r.name),
-      el("td", { class: "lb-time" }, r.solved ? fmt(r.ms) : r.placed + "/" + r.total + " placed"),
-      el("td", {}, String(r.moves))));
-    agents.replaceChildren(rows.length ? table(["#", "Company", "Model", "Time", "Moves"], rows) : el("p", { class: "lb-empty" }, "No benchmark runs yet."));
+      el("td", {}, logo(r), r.name),
+      el("td", { class: "lb-time" }, r.solved ? fmt(r.ms) : r.placed + "/" + r.total)));
+    agents.replaceChildren(rows.length ? table(["#", "Model", "Time"], rows) : el("p", { class: "lb-empty" }, "No benchmark runs yet."));
   } catch (e) {
     agents.replaceChildren(el("p", { class: "lb-empty" }, "Couldn't load the benchmark."));
   }

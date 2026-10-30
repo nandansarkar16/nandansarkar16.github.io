@@ -31,7 +31,6 @@
         <li><a href="{{ '/' | relative_url }}"            class="nav-link active">about</a></li>
         <li><a href="{{ '/publications/' | relative_url }}" class="nav-link">publications</a></li>
         <li><a href="{{ '/blog/' | relative_url }}"        class="nav-link">blog</a></li>
-        <li><a href="{{ '/leaderboard/' | relative_url }}"   class="nav-link">leaderboard</a></li>
         <li><a href="{{ '/files/resume.pdf' | relative_url }}" target="_blank" rel="noopener" class="nav-link">resume</a></li>
       </ul>
     </nav>
@@ -121,6 +120,17 @@
             alt="{{ site.author.name | default: 'Profile photo' }}"
             onerror="document.getElementById('profilePhoto').classList.add('photo-placeholder'); this.remove();"
           >
+          <div id="leaderboard" class="lb" hidden>
+            <div class="lb-tabs" role="tablist">
+              <button type="button" role="tab" data-tab="humans" aria-selected="true">Humans</button>
+              <button type="button" role="tab" data-tab="agents" aria-selected="false">AI agents</button>
+            </div>
+            <div data-panel="humans"><div class="lb-body"><p class="lb-empty">Loading…</p></div></div>
+            <div data-panel="agents" hidden>
+              <p class="lb-note">Models solving the same puzzle from screenshots, with frozen pieces.</p>
+              <div class="lb-body"><p class="lb-empty">Loading…</p></div>
+            </div>
+          </div>
         </div>
       </section><!-- /profile-section -->
 
