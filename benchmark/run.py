@@ -38,7 +38,7 @@ def run(model_id, entry, args, browser):
     system = (agents.SYSTEM.replace("[[x0]]", str(x0)).replace("[[y0]]", str(y0))
               .replace("[[moves]]", str(args.max_moves)).replace("[[minutes]]", str(round(args.time_limit / 60))))
     agent = agents.make(entry, page, system)
-    moves, error = 0, None
+    moves, error, turns = 0, None, []  # turns: what the model asked for each turn and the result, kept locally
     status = page.evaluate("window.puzzle.status()")
     def left():
         minutes = max(0, (args.time_limit - (time.monotonic() - start)) / 60)
@@ -49,6 +49,7 @@ def run(model_id, entry, args, browser):
         while not status["solved"] and moves < args.max_moves and time.monotonic() - start < args.time_limit:
             requested = agent.next_moves(page.screenshot(), note)
             if not requested:
+                turns.append({"drags": [], "placed": status["placed"]})
                 note = "You didn't drag anything this turn. " + left() + " Use the drag tool to keep placing pieces until all are placed."
                 continue
             for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
@@ -56,6 +57,7 @@ def run(model_id, entry, args, browser):
                 moves += 1
             time.sleep(SETTLE)
             status = page.evaluate("window.puzzle.status()")
+            turns.append({"drags": requested, "placed": status["placed"], "seconds": round(time.monotonic() - start, 1)})
             note = left()
             print(f"  {model_id}: {moves} moves, {note}")
     except Exception as e:  # an API failure ends the run; it's saved locally but never uploaded
@@ -69,7 +71,7 @@ def run(model_id, entry, args, browser):
         "provider": entry["provider"], "api_model": entry.get("model", ""),
         "solved": status["solved"], "ms": round(elapsed * 1000), "placed": status["placed"], "total": status["total"],
         "placed_map": status["map"],
-        "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies,
+        "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "turns": turns,
         "seed": args.seed, "error": error, "harness_version": HARNESS_VERSION,
         "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
     }
@@ -80,7 +82,7 @@ def upload(record):
     from firebase_admin import firestore
     if not firebase_admin._apps:
         firebase_admin.initialize_app()  # service account key from GOOGLE_APPLICATION_CREDENTIALS
-    firestore.client().collection("agents").add({k: v for k, v in record.items() if k != "replies"})
+    firestore.client().collection("agents").add({k: v for k, v in record.items() if k not in ("replies", "turns")})
 
 
 def main():
