@@ -18,7 +18,7 @@ from playwright.sync_api import sync_playwright
 import agents
 import replay
 
-HARNESS_VERSION = 8
+HARNESS_VERSION = 9
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -52,22 +52,44 @@ def run(model_id, entry, args, browser, path, recorder):
             "provider": entry["provider"], "api_model": entry.get("model", ""),
             "solved": status["solved"], "ms": round((time.monotonic() - start) * 1000), "placed": status["placed"], "total": status["total"],
             "placed_map": status["map"],
-            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "notes": agent.notes, "turns": turns, "refusals": getattr(agent, "refusals", 0),
+            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "turns": turns, "refusals": getattr(agent, "refusals", 0),
             "seed": args.seed, "ended": ended, "error": error, "harness_version": HARNESS_VERSION,
             "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         }
 
-    recent = []  # (drag, locked in?) for the recap each turn
+    # The model's memory between turns, built only from what happened on the page (never from its own text):
+    # which cells are filled, every drop that didn't lock in, and what each recent drag did
+    cell = page.evaluate("document.querySelector('#profilePhoto img').getBoundingClientRect().width") / 6
+    recent, misses = [], []
+
+    def cell_at(x, y):
+        c, r = int((x - x0) // cell), int((y - y0) // cell)
+        return (c, r) if 0 <= c < 6 and 0 <= r < 6 else None
+
+    def outcome(move, loose_before, placed_before, placed_after):
+        if placed_after > placed_before:
+            return "locked in"
+        grabbed = any(abs(p["x"] - move["from_x"]) <= cell / 2 and abs(p["y"] - move["from_y"]) <= cell / 2 for p in loose_before)
+        if not grabbed:
+            return "did not pick up a loose piece (nothing moved)"
+        target = cell_at(move["to_x"], move["to_y"])
+        if target is None:
+            return "did not lock in (dropped outside the frame)"
+        misses.append(f"- piece picked up at ({move['from_x']:.0f}, {move['from_y']:.0f}) dropped in cell {target}: did not lock in")
+        return f"did not lock in at cell {target}"
 
     def recap(opening):
         lines = [opening + " " + left()]
+        filled = [f"({i % 6},{i // 6})" for i, on in enumerate(status["map"]) if on]
+        empty = [f"({i % 6},{i // 6})" for i, on in enumerate(status["map"]) if not on]
+        lines.append("Filled cells (column,row): " + (" ".join(filled) or "none"))
+        lines.append("Empty cells: " + (" ".join(empty) or "none"))
+        if misses:
+            lines.append("Drops that did not lock in so far, oldest first (pieces dropped in the frame stay where they landed):")
+            lines += misses[-40:]
         if recent:
             lines.append("Your most recent drags, oldest first:")
-            lines += [f"- ({m['from_x']:.0f}, {m['from_y']:.0f}) to ({m['to_x']:.0f}, {m['to_y']:.0f}): {'locked in' if ok else 'did not lock in'}"
-                      for m, ok in recent[-10:]]
-        last_note = next((n for n in reversed(agent.notes) if n), "")
-        if last_note:
-            lines.append("Your note from your last drag: " + last_note[-1500:])
+            lines += [f"- ({m['from_x']:.0f}, {m['from_y']:.0f}) to ({m['to_x']:.0f}, {m['to_y']:.0f}): {result}" for m, result in recent[-10:]]
         return "\n".join(lines)
 
     def capture():
@@ -96,12 +118,13 @@ def run(model_id, entry, args, browser, path, recorder):
                     continue
             else:
                 for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
-                    before = status["placed"]
-                    drag(page, move)  # the note rides along in the move; drag() only reads the coordinates
+                    placed_before = status["placed"]
+                    loose_before = [p for p in page.evaluate("window.puzzle.pieces()") if not p["placed"]]
+                    drag(page, move)
                     moves += 1
                     page.wait_for_timeout(150)  # a piece that snaps counts as placed right away
                     status = page.evaluate("window.puzzle.status()")
-                    recent.append((move, status["placed"] > before))
+                    recent.append((move, outcome(move, loose_before, placed_before, status["placed"])))
                     capture()
                 last_drag = time.monotonic()
                 time.sleep(SETTLE)
@@ -161,7 +184,7 @@ def upload(record):
     from firebase_admin import firestore
     if not firebase_admin._apps:
         firebase_admin.initialize_app()  # service account key from GOOGLE_APPLICATION_CREDENTIALS
-    firestore.client().collection("agents").add({k: v for k, v in record.items() if k not in ("replies", "notes", "turns")})
+    firestore.client().collection("agents").add({k: v for k, v in record.items() if k not in ("replies", "turns")})
 
 
 def main():
