@@ -36,5 +36,7 @@ class Recorder:
             subprocess.run([
                 imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error",
                 "-framerate", f"{fps:.3f}", "-i", str(pathlib.Path(tmp) / "%05d.jpg"),
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "28", "-movflags", "+faststart", str(path),
+                # Standard (limited-range) yuv420p: full-range video from JPEG frames shows black in some browsers, like Safari
+                "-vf", "scale=out_range=tv,format=yuv420p", "-color_range", "tv",
+                "-c:v", "libx264", "-crf", "28", "-movflags", "+faststart", str(path),
             ], check=True)

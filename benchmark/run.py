@@ -10,6 +10,7 @@ import json
 import pathlib
 import subprocess
 import time
+import urllib.request
 
 import yaml
 from playwright.sync_api import sync_playwright
@@ -135,9 +136,24 @@ def publish_replay(file):
     subprocess.run(git + ["commit", "-q", "-m", "update", "--", str(file)], check=True)
     for _ in range(3):
         if subprocess.run(git + ["push", "-q", "origin", "HEAD"]).returncode == 0:
-            return
+            break
         subprocess.run(git + ["pull", "-q", "--rebase", "origin", "master"], check=True)
-    raise RuntimeError("couldn't push the replay")
+    else:
+        raise RuntimeError("couldn't push the replay")
+
+
+def wait_until_live(url, limit=900):
+    """GitHub Pages takes a minute or more to publish; post the result only once the replay loads."""
+    end = time.monotonic() + limit
+    while time.monotonic() < end:
+        try:
+            with urllib.request.urlopen(url, timeout=20) as r:
+                if r.status == 200:
+                    return True
+        except Exception:
+            pass
+        time.sleep(15)
+    return False
 
 
 def upload(record):
@@ -188,6 +204,10 @@ def main():
             print(f"{model_id}: {verdict}, {record['moves']} moves -> {path.name}")
             if publish:
                 publish_replay(video)  # pushed first, so the leaderboard link works as soon as the result appears
+                live = args.url.rstrip("/") + record["replay"]
+                print(f"{model_id}: waiting for the replay to go live")
+                if not wait_until_live(live):
+                    print(f"{model_id}: replay isn't live yet; uploading anyway")
                 upload(record)
                 print(f"{model_id}: uploaded, replay at {record['replay']}")
         browser.close()
