@@ -228,7 +228,7 @@ img { display: block; max-width: 100%; }
   display: inline-flex;
   align-items: center;
   gap: 0.38rem;
-  padding: 0.28rem 0.78rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 0.82rem;
@@ -246,7 +246,7 @@ img { display: block; max-width: 100%; }
 }
 
 .social-link i {
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   opacity: 0.85;
 }
 

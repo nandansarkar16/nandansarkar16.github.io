@@ -79,37 +79,37 @@
 
           <div class="social-links">
             {% if site.author.twitter %}
-            <a href="https://x.com/{{ site.author.twitter }}" class="social-link" target="_blank" rel="noopener">
-              <i class="fab fa-x-twitter"></i><span>X</span>
+            <a href="https://x.com/{{ site.author.twitter }}" class="social-link" target="_blank" rel="noopener" aria-label="X" title="X">
+              <i class="fab fa-x-twitter"></i>
             </a>
             {% endif %}
 
             {% if site.author.googlescholar %}
-            <a href="{{ site.author.googlescholar }}" class="social-link" target="_blank" rel="noopener">
-              <i class="ai ai-google-scholar"></i><span>Scholar</span>
+            <a href="{{ site.author.googlescholar }}" class="social-link" target="_blank" rel="noopener" aria-label="Scholar" title="Scholar">
+              <i class="ai ai-google-scholar"></i>
             </a>
             {% endif %}
 
             {% if site.author.linkedin %}
-            <a href="https://linkedin.com/in/{{ site.author.linkedin }}" class="social-link" target="_blank" rel="noopener">
-              <i class="fab fa-linkedin-in"></i><span>LinkedIn</span>
+            <a href="https://linkedin.com/in/{{ site.author.linkedin }}" class="social-link" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn">
+              <i class="fab fa-linkedin-in"></i>
             </a>
             {% endif %}
 
             {% if site.author.github %}
-            <a href="https://github.com/{{ site.author.github }}" class="social-link" target="_blank" rel="noopener">
-              <i class="fab fa-github"></i><span>GitHub</span>
+            <a href="https://github.com/{{ site.author.github }}" class="social-link" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub">
+              <i class="fab fa-github"></i>
             </a>
             {% endif %}
 
             {% if site.author.email %}
-            <a href="mailto:{{ site.author.email }}" class="social-link">
-              <i class="fas fa-envelope"></i><span>Email</span>
+            <a href="mailto:{{ site.author.email }}" class="social-link" aria-label="Email" title="Email">
+              <i class="fas fa-envelope"></i>
             </a>
             {% endif %}
 
-            <a href="{{ '/files/resume.pdf' | relative_url }}" target="_blank" rel="noopener" class="social-link">
-              <i class="fas fa-file-lines"></i><span>Resume</span>
+            <a href="{{ '/files/resume.pdf' | relative_url }}" target="_blank" rel="noopener" class="social-link" aria-label="Resume" title="Resume">
+              <i class="fas fa-file-lines"></i>
             </a>
           </div>
         </div><!-- /profile-content -->
