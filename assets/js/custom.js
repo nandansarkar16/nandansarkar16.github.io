@@ -164,22 +164,21 @@
     return { x: r.left + window.scrollX + p.col * cell, y: r.top + window.scrollY + p.row * cell };
   }
 
+  // Drop every piece at a random spot in its own floating area
   function shuffle() {
-    box.classList.remove("is-solved");
     pieces.forEach(function (p) {
-      var z = zones[Math.floor(Math.random() * zones.length)];
-      p.state = "flying";
-      p.then = "floating";
-      p.tx = z.x0 + Math.random() * (z.x1 - z.x0);
-      p.ty = z.y0 + Math.random() * (z.y1 - z.y0);
-      p.ta = (Math.random() * 2 - 1) * 0.5;
+      var z = p.zone();
+      p.state = "floating";
+      p.x = z.x0 + Math.random() * (z.x1 - z.x0);
+      p.y = z.y0 + Math.random() * (z.y1 - z.y0);
+      p.a = (Math.random() * 2 - 1) * 0.5;
       p.el.classList.remove("is-placed");
     });
   }
 
   function solve() {
     pieces.forEach(function (p) {
-      if (p.state !== "placed") { p.state = "flying"; p.then = "placed"; }
+      if (p.state !== "placed") p.state = "flying";
     });
   }
 
@@ -191,12 +190,11 @@
       var h = home(p);
       if (p.state === "placed") { p.x = h.x; p.y = h.y; p.a = 0; }
       else done = false;
-      if (p.state === "flying") {
-        if (p.then === "placed") { p.tx = h.x; p.ty = h.y; p.ta = 0; }
-        p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k; p.a += (p.ta - p.a) * k;
-        if (Math.abs(p.tx - p.x) + Math.abs(p.ty - p.y) < 0.5) {
-          p.state = p.then;
-          p.el.classList.toggle("is-placed", p.state === "placed");
+      if (p.state === "flying") {  // heading home
+        p.x += (h.x - p.x) * k; p.y += (h.y - p.y) * k; p.a += (0 - p.a) * k;
+        if (Math.abs(h.x - p.x) + Math.abs(h.y - p.y) < 0.5) {
+          p.state = "placed";
+          p.el.classList.add("is-placed");
         }
       } else if (p.state === "floating") {
         var z = p.zone(), wob = Math.sin(t / 2000 + p.phase) * 0.02;
@@ -229,7 +227,7 @@
       p.el.classList.remove("is-dragging");
       var h = home(p);
       if (Math.abs(p.x - h.x) < cell * SNAP && Math.abs(p.y - h.y) < cell * SNAP) {
-        p.state = "flying"; p.then = "placed";
+        p.state = "flying";
       } else {
         p.state = "parked";  // stays where it was dropped until picked up again
       }
@@ -273,9 +271,8 @@
     }
     render();
     findZones();
-    pieces.forEach(function (p) { var h = home(p); p.x = h.x; p.y = h.y; });
+    shuffle();
     requestAnimationFrame(tick);
-    setTimeout(shuffle, 600);  // break apart shortly after the page loads
 
     controls.addEventListener("click", function (e) {
       var act = e.target.getAttribute("data-act");
