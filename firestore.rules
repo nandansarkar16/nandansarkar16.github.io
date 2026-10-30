@@ -5,6 +5,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Accounts that can delete leaderboard entries (same list as ADMINS in assets/js/leaderboard.js)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email in ['ns7143@nyu.edu', 'nandan.sarkar@yale.edu', 'nsarkar616@gmail.com'];
+    }
+
     // A saved time must match the server's clock: between the run's start and now, within a few seconds
     function matchesServerClock(uid, ms) {
       let started = get(/databases/$(database)/documents/sessions/$(uid)).data.startedAt;
@@ -34,6 +40,7 @@ service cloud.firestore {
         && request.resource.data.at == request.time
         && matchesServerClock(uid, request.resource.data.ms)
         && (resource == null || request.resource.data.ms < resource.data.ms);
+      allow delete: if isAdmin();
     }
 
     // Agent benchmark runs: written only by the benchmark harness, which uses admin credentials

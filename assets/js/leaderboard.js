@@ -1,5 +1,5 @@
 /* =============================================================
-   leaderboard.js — puzzle races (home page) and the leaderboard page
+   leaderboard.js — puzzle races and the leaderboard under the photo
    ============================================================= */
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -7,6 +7,8 @@ const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 const LOGOS = "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/";
 const board = document.getElementById("leaderboard");
 const box = document.getElementById("profilePhoto");
+// Accounts that can delete leaderboard entries; firestore.rules has the same list
+const ADMINS = ["ns7143@nyu.edu", "nandan.sarkar@yale.edu", "nsarkar616@gmail.com"];
 
 function fmt(ms) {
   const sec = ms / 1000;
@@ -31,6 +33,7 @@ if (board) {
 }
 
 let refreshHumans = () => {};
+let me = null;  // the signed-in user, if any
 
 if (firebaseConfig) {  // without a config the leaderboard stays hidden
   const [{ initializeApp }, auth, fs] = await Promise.all([
@@ -39,8 +42,8 @@ if (firebaseConfig) {  // without a config the leaderboard stays hidden
   const app = initializeApp(firebaseConfig);
   const db = fs.getFirestore(app);
   const authApi = auth.getAuth(app);
-  if (board) { board.hidden = false; showBoard(fs, db); }
   if (box) race(auth, authApi, fs, db);
+  if (board) { board.hidden = false; showBoard(fs, db); }
 }
 
 /* ── Home page: sign in, time a run from Shuffle to solved, save the best time ── */
@@ -51,11 +54,7 @@ function race(auth, authApi, fs, db) {
   function render() {
     const lb = el("a", { href: "#leaderboard" }, "leaderboard");
     if (solved && user && timed && !solved.assisted) {
-      const input = el("input", { type: "text", maxlength: "30", placeholder: "Your name", "aria-label": "Name for the leaderboard" });
-      input.value = localStorage.getItem("puzzleName") || (user.displayName || "").split(" ")[0];
-      const save = el("button", { type: "button" }, "Save");
-      save.addEventListener("click", () => saveScore(input.value.trim(), solved.ms, save));
-      panel.replaceChildren(el("p", {}, "Solved in " + fmt(solved.ms) + "!"), el("div", { class: "puzzle-race-save" }, input, save));
+      panel.replaceChildren(el("p", {}, "Solved in " + fmt(solved.ms) + "! Saving…"));
     } else if (solved && user) {
       panel.replaceChildren(el("p", {}, solved.assisted ? "Solved with help. " : "Solved! ", "Press Shuffle to start a timed run for the ", lb, "."));
     } else if (solved) {
@@ -75,22 +74,22 @@ function race(auth, authApi, fs, db) {
     return b;
   }
 
-  async function saveScore(name, ms, button) {
-    if (!name) return;
-    localStorage.setItem("puzzleName", name);
-    button.disabled = true;
+  // Saved right away under the Google account name: the rules compare the time with the server clock at save time
+  async function saveScore(ms) {
     const ref = fs.doc(db, "scores", user.uid);
     try {
       const best = await fs.getDoc(ref);
       if (best.exists() && best.data().ms <= ms) {
-        panel.replaceChildren(el("p", {}, "Your best is still " + fmt(best.data().ms) + ". Shuffle to try again."));
+        panel.replaceChildren(el("p", {}, "Solved in " + fmt(ms) + ". Your best is still " + fmt(best.data().ms) + "."));
         return;
       }
+      const name = (user.displayName || "Anonymous").slice(0, 30);
       await fs.setDoc(ref, { name, ms, at: fs.serverTimestamp() });
-      panel.replaceChildren(el("p", {}, "Saved! Your time is on the leaderboard below."));
+      panel.replaceChildren(el("p", {}, "Solved in " + fmt(ms) + "! Saved to the leaderboard below."));
       refreshHumans();
     } catch (e) {
-      panel.replaceChildren(el("p", {}, "Couldn't save that time. Shuffle and try another run."));
+      console.error("Leaderboard save failed:", e);
+      panel.replaceChildren(el("p", {}, "Solved in " + fmt(ms) + ", but couldn't save it. Shuffle and try another run."));
     }
   }
 
@@ -102,8 +101,12 @@ function race(auth, authApi, fs, db) {
     if (user) fs.setDoc(fs.doc(db, "sessions", user.uid), { startedAt: fs.serverTimestamp() }).then(() => { timed = true; }, () => {});
     render();
   });
-  document.addEventListener("puzzle:solved", (e) => { solved = e.detail; render(); });
-  auth.onAuthStateChanged(authApi, (u) => { user = u; render(); });
+  document.addEventListener("puzzle:solved", (e) => {
+    solved = e.detail;
+    render();
+    if (user && timed && !solved.assisted) saveScore(solved.ms);
+  });
+  auth.onAuthStateChanged(authApi, (u) => { user = me = u; render(); refreshHumans(); });
 }
 
 /* ── Leaderboard under the photo ── */
@@ -114,9 +117,15 @@ async function showBoard(fs, db) {
   refreshHumans = async () => {
     try {
       const snap = await fs.getDocs(fs.query(fs.collection(db, "scores"), fs.orderBy("ms"), fs.limit(10)));
+      const admin = me && me.emailVerified && ADMINS.includes(me.email);
       const rows = snap.docs.map((d, i) => {
-        const s = d.data();
-        return el("tr", {}, el("td", {}, String(i + 1)), el("td", {}, s.name), el("td", { class: "lb-time" }, fmt(s.ms)));
+        const s = d.data(), name = el("td", {}, s.name);
+        if (admin) {
+          const del = el("button", { type: "button", class: "lb-delete", title: "Delete this entry", "aria-label": "Delete " + s.name }, "×");
+          del.addEventListener("click", () => fs.deleteDoc(d.ref).then(refreshHumans, (e) => console.error("Delete failed:", e)));
+          name.append(del);
+        }
+        return el("tr", {}, el("td", {}, String(i + 1)), name, el("td", { class: "lb-time" }, fmt(s.ms)));
       });
       humans.replaceChildren(rows.length ? table(["#", "Name", "Time"], rows) : el("p", { class: "lb-empty" }, "No times yet. Be the first!"));
     } catch (e) {
