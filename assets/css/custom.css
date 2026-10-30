@@ -321,7 +321,7 @@ img { display: block; max-width: 100%; }
 }
 
 .puzzle-piece.is-dragging { cursor: grabbing; z-index: 41; }
-.puzzle-piece.is-placed { cursor: default; filter: none; }
+.puzzle-piece.is-placed { cursor: default; filter: none; z-index: 39; }  /* under loose pieces, so none get buried */
 .puzzle-solved .puzzle-piece { visibility: hidden; }
 
 .puzzle-timer {

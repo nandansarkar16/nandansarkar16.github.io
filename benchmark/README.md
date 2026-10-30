@@ -49,7 +49,7 @@ Every run is saved to `results/` as JSON. `--upload` publishes it; runs that end
 The leaderboard shows each model's best run: solved runs ranked by time, then unsolved runs by pieces placed.
 
 Options: `--seed` (keep it the same across models), `--max-moves` (default 150), `--time-limit` seconds (default 1200),
-`--headed` to watch the browser, `--url` to test a local copy of the site.
+`--idle-limit` seconds without a drag before a run ends (default 120), `--headed` to watch the browser, `--url` to test a local copy of the site.
 
 ## Adding models
 

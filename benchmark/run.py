@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 import agents
 
-HARNESS_VERSION = 3
+HARNESS_VERSION = 4
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -28,7 +28,7 @@ def drag(page, move):
     page.mouse.up()
 
 
-def run(model_id, entry, args, browser):
+def run(model_id, entry, args, browser, path):
     page = browser.new_page(viewport=VIEWPORT)
     page.goto(f"{args.url}?bench&seed={args.seed}")
     page.wait_for_function("window.puzzle && window.puzzle.pieces")
@@ -43,38 +43,58 @@ def run(model_id, entry, args, browser):
     def left():
         minutes = max(0, (args.time_limit - (time.monotonic() - start)) / 60)
         return f"{status['placed']}/{status['total']} pieces placed, {args.max_moves - moves} moves and {minutes:.0f} minutes left."
-    start = time.monotonic()  # the clock includes model thinking and API time; only the move cap or time limit ends a run
+    def record(ended):
+        return {
+            "model": model_id, "name": entry["name"], "company": entry["company"], "logo": entry.get("logo", ""),
+            "provider": entry["provider"], "api_model": entry.get("model", ""),
+            "solved": status["solved"], "ms": round((time.monotonic() - start) * 1000), "placed": status["placed"], "total": status["total"],
+            "placed_map": status["map"],
+            "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "turns": turns,
+            "seed": args.seed, "ended": ended, "error": error, "harness_version": HARNESS_VERSION,
+            "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        }
+
+    # Ends on: solved, the move cap, the time limit, or no drag for --idle-limit seconds
+    start = last_drag = time.monotonic()  # the clock includes model thinking and API time
     note = "Here is the puzzle. " + left()
+    ended = None
     try:
-        while not status["solved"] and moves < args.max_moves and time.monotonic() - start < args.time_limit:
+        while not ended:
             requested = agent.next_moves(page.screenshot(), note)
             if not requested:
-                turns.append({"drags": [], "placed": status["placed"]})
-                note = "You didn't drag anything this turn. " + left() + " Use the drag tool to keep placing pieces until all are placed."
-                continue
-            for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
-                drag(page, move)
-                moves += 1
-            time.sleep(SETTLE)
-            status = page.evaluate("window.puzzle.status()")
-            turns.append({"drags": requested, "placed": status["placed"], "seconds": round(time.monotonic() - start, 1)})
-            note = left()
-            print(f"  {model_id}: {moves} moves, {note}")
+                turns.append({"drags": [], "placed": status["placed"], "seconds": round(time.monotonic() - start, 1)})
+                if time.monotonic() - last_drag > args.idle_limit:
+                    ended = f"no drag for {args.idle_limit // 60} minutes"
+                else:
+                    note = (f"You didn't drag anything this turn. {left()} Use the drag tool to keep placing pieces; "
+                            f"if {args.idle_limit // 60} minutes pass without a drag, the run ends.")
+                    path.write_text(json.dumps(record("running"), indent=2))  # saved every turn, so an interrupted run keeps its data
+                    continue
+            else:
+                for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
+                    drag(page, move)
+                    moves += 1
+                last_drag = time.monotonic()
+                time.sleep(SETTLE)
+                status = page.evaluate("window.puzzle.status()")
+                turns.append({"drags": requested, "placed": status["placed"], "seconds": round(time.monotonic() - start, 1)})
+                note = left()
+                print(f"  {model_id}: {moves} moves, {note}")
+            path.write_text(json.dumps(record("running"), indent=2))
+            if status["solved"]:
+                ended = "solved"
+            elif moves >= args.max_moves:
+                ended = "move limit"
+            elif time.monotonic() - start >= args.time_limit:
+                ended = "time limit"
     except Exception as e:  # an API failure ends the run; it's saved locally but never uploaded
         error = f"{type(e).__name__}: {e}"
+        ended = "error"
         print(f"  {model_id}: stopped by {error}")
-    elapsed = time.monotonic() - start
+    final = record(ended)
+    path.write_text(json.dumps(final, indent=2))
     page.close()
-
-    return {
-        "model": model_id, "name": entry["name"], "company": entry["company"], "logo": entry.get("logo", ""),
-        "provider": entry["provider"], "api_model": entry.get("model", ""),
-        "solved": status["solved"], "ms": round(elapsed * 1000), "placed": status["placed"], "total": status["total"],
-        "placed_map": status["map"],
-        "moves": moves, "input_tokens": agent.input_tokens, "output_tokens": agent.output_tokens, "replies": agent.replies, "turns": turns,
-        "seed": args.seed, "error": error, "harness_version": HARNESS_VERSION,
-        "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-    }
+    return final
 
 
 def upload(record):
@@ -92,6 +112,7 @@ def main():
     parser.add_argument("--seed", type=int, default=1, help="puzzle layout; keep it the same across models")
     parser.add_argument("--max-moves", type=int, default=150)
     parser.add_argument("--time-limit", type=int, default=1200, help="seconds")
+    parser.add_argument("--idle-limit", type=int, default=120, help="end the run after this many seconds without a drag")
     parser.add_argument("--upload", action="store_true", help="publish results to the leaderboard")
     parser.add_argument("--headed", action="store_true", help="show the browser window")
     args = parser.parse_args()
@@ -108,10 +129,10 @@ def main():
         browser = pw.chromium.launch(channel="chrome", headless=not args.headed)  # uses the installed Google Chrome
         for model_id in args.models:
             print(f"{model_id}: starting")
-            record = run(model_id, catalog[model_id], args, browser)
-            path = results / f"{record['date'][:19].replace(':', '')}-{model_id}.json"
-            path.write_text(json.dumps(record, indent=2))
-            verdict = f"solved in {record['ms'] / 1000:.1f}s" if record["solved"] else f"{record['placed']}/{record['total']} placed"
+            stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H%M%S")
+            path = results / f"{stamp}-{model_id}.json"
+            record = run(model_id, catalog[model_id], args, browser, path)
+            verdict = f"solved in {record['ms'] / 1000:.1f}s" if record["solved"] else f"{record['placed']}/{record['total']} placed ({record['ended']})"
             print(f"{model_id}: {verdict}, {record['moves']} moves -> {path.name}")
             if args.upload and model_id != "oracle" and not record["error"]:
                 upload(record)
