@@ -8,4 +8,6 @@ How dragging works: drag(from_x, from_y, to_x, to_y) presses the mouse at the fi
 
 Snapping: a piece locks into place if you drop its center within 16 pixels of its correct cell center, horizontally and vertically. A locked piece loses its drop shadow and can't be moved again. A piece dropped anywhere else just stays there and may cover other pieces or the ghost image, so don't drop pieces in the frame unless you're fairly confident. Moving a misplaced piece costs another move.
 
-Budget: you have [[moves]] drags and [[minutes]] minutes in total. After each turn you get a new screenshot, the number of pieces placed, and the moves and minutes left. You can make several drags per turn. Keep going until all 36 pieces are placed.
+Budget: you have [[moves]] drags and [[minutes]] minutes in total. You can make several drags per turn. Keep going until all 36 pieces are placed.
+
+Each turn starts fresh: you won't see earlier screenshots. Instead you get the current screenshot, the number of pieces placed, the moves and minutes left, your most recent drags with whether each piece locked in, and any note you wrote last turn. Use that note to remember your plan.

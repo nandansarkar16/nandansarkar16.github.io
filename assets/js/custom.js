@@ -332,9 +332,10 @@
     // Read-only status for the leaderboard and the agent benchmark harness
     window.puzzle = {
       status: function () {
-        var placed = pieces.filter(function (p) { return p.state === "placed"; }).length;
-        return { total: pieces.length, placed: placed, solved: placed === pieces.length,
-                 map: pieces.map(function (p) { return p.state === "placed"; }) };  // row by row from the top-left
+        // A piece gliding into its spot ("flying") is already locked in, so it counts as placed
+        var home = pieces.map(function (p) { return p.state === "placed" || p.state === "flying"; });
+        var placed = home.filter(Boolean).length;
+        return { total: pieces.length, placed: placed, solved: placed === pieces.length, map: home };  // row by row from the top-left
       }
     };
     if (BENCH) {  // piece centers in viewport coordinates, used only by the harness's scripted "oracle" solver

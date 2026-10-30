@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 import agents
 
-HARNESS_VERSION = 4
+HARNESS_VERSION = 5
 HERE = pathlib.Path(__file__).parent
 VIEWPORT = {"width": 1280, "height": 800}
 SETTLE = 0.8  # seconds for a dropped piece to finish snapping before the next screenshot
@@ -54,9 +54,22 @@ def run(model_id, entry, args, browser, path):
             "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         }
 
+    recent = []  # (drag, locked in?) for the recap each turn
+
+    def recap(opening):
+        lines = [opening + " " + left()]
+        if recent:
+            lines.append("Your most recent drags, oldest first:")
+            lines += [f"- ({m['from_x']:.0f}, {m['from_y']:.0f}) to ({m['to_x']:.0f}, {m['to_y']:.0f}): {'locked in' if ok else 'did not lock in'}"
+                      for m, ok in recent[-10:]]
+        last_note = next((r for r in reversed(agent.replies) if r), "")
+        if last_note:
+            lines.append("Your note from last turn: " + last_note[-800:])
+        return "\n".join(lines)
+
     # Ends on: solved, the move cap, the time limit, or no drag for --idle-limit seconds
     start = last_drag = time.monotonic()  # the clock includes model thinking and API time
-    note = "Here is the puzzle. " + left()
+    note = recap("Here is the puzzle.")
     ended = None
     try:
         while not ended:
@@ -66,20 +79,24 @@ def run(model_id, entry, args, browser, path):
                 if time.monotonic() - last_drag > args.idle_limit:
                     ended = f"no drag for {args.idle_limit // 60} minutes"
                 else:
-                    note = (f"You didn't drag anything this turn. {left()} Use the drag tool to keep placing pieces; "
-                            f"if {args.idle_limit // 60} minutes pass without a drag, the run ends.")
+                    note = recap(f"You didn't drag anything last turn. Use the drag tool to keep placing pieces; "
+                                 f"if {args.idle_limit // 60} minutes pass without a drag, the run ends.")
                     path.write_text(json.dumps(record("running"), indent=2))  # saved every turn, so an interrupted run keeps its data
                     continue
             else:
                 for move in requested[:args.max_moves - moves]:  # the move cap is strict, even mid-turn
+                    before = status["placed"]
                     drag(page, move)
                     moves += 1
+                    page.wait_for_timeout(150)  # a piece that snaps counts as placed right away
+                    status = page.evaluate("window.puzzle.status()")
+                    recent.append((move, status["placed"] > before))
                 last_drag = time.monotonic()
                 time.sleep(SETTLE)
                 status = page.evaluate("window.puzzle.status()")
                 turns.append({"drags": requested, "placed": status["placed"], "seconds": round(time.monotonic() - start, 1)})
-                note = left()
-                print(f"  {model_id}: {moves} moves, {note}")
+                note = recap(f"Turn {len(turns) + 1}.")
+                print(f"  {model_id}: {moves} moves, {left()}")
             path.write_text(json.dumps(record("running"), indent=2))
             if status["solved"]:
                 ended = "solved"
