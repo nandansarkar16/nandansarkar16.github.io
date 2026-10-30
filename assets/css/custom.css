@@ -264,6 +264,11 @@ img { display: block; max-width: 100%; }
   box-shadow: var(--shadow-md);
 }
 
+/* Mosaic canvas drawn over the photo by custom.js; the img keeps the layout space */
+.profile-photo.is-mosaic { position: relative; cursor: pointer; }
+.profile-photo.is-mosaic img { visibility: hidden; }
+.photo-mosaic { position: absolute; pointer-events: none; }
+
 /* Placeholder shown when image fails to load */
 .profile-photo.photo-placeholder {
   width: 200px;
