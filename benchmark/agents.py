@@ -30,44 +30,55 @@ def valid(move):
 
 
 
-# Each turn is a fresh, one-message request: instructions, a text recap and the current screenshot.
-# No growing history, so every turn costs about the same.
+# The model keeps the whole game in its conversation: every screenshot, its own replies and drags.
+# Each turn re-reads the cached history, so turns get a little more expensive as the game goes on.
 
 class AnthropicAgent:
     def __init__(self, entry, system):
         import anthropic
-        self.client = anthropic.Anthropic(max_retries=5)
+        self.client = anthropic.Anthropic(max_retries=5, timeout=180)  # a hung request retries after 3 minutes instead of 10
         self.entry = entry
         self.system = system
+        self.messages = []
+        self.pending = []  # tool_use ids from the last turn, answered with the next screenshot
         self.input_tokens = self.output_tokens = 0
         self.replies = []  # the model's text, kept in the local results file to see why a run went the way it did
         self.refusals = 0  # turns the safety filters declined and were retried
 
     def next_moves(self, png, note):
+        shot = [{"type": "text", "text": note},
+                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": base64.b64encode(png).decode()}}]
+        if self.pending:
+            content = [{"type": "tool_result", "tool_use_id": i, "content": "Done."} for i in self.pending[:-1]]
+            content.append({"type": "tool_result", "tool_use_id": self.pending[-1], "content": shot})
+        else:
+            content = shot
+        self.messages.append({"role": "user", "content": content})
+
         # A refusal from the safety filters is usually a one-off false positive, so retry the same turn up to twice
         for attempt in range(3):
-            response = self.request(png, note)
+            response = self.request()
             if response.stop_reason != "refusal":
                 break
             self.refusals += 1
         else:
             category = getattr(response.stop_details, "category", None) if response.stop_details else None
             raise RuntimeError(f"model refused 3 times in a row (category: {category})")
-        moves = [b.input for b in response.content if b.type == "tool_use" and valid(b.input)]
+        self.messages.append({"role": "assistant", "content": response.content})
         self.replies.append("\n".join(b.text for b in response.content if b.type == "text" and b.text.strip()))
-        return moves
+        calls = [b for b in response.content if b.type == "tool_use"]
+        self.pending = [b.id for b in calls]
+        return [b.input for b in calls if valid(b.input)]
 
-    def request(self, png, note):
+    def request(self):
         response = self.client.messages.create(
             model=self.entry["model"],
             max_tokens=16000,
-            system=[{"type": "text", "text": self.system, "cache_control": {"type": "ephemeral"}}],
+            system=self.system,
             tools=[{"name": DRAG["name"], "description": DRAG["description"], "input_schema": DRAG["parameters"], "strict": True}],
-            messages=[{"role": "user", "content": [
-                {"type": "text", "text": note},
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": base64.b64encode(png).decode()}},
-            ]}],
+            messages=self.messages,
             output_config={"effort": self.entry.get("effort", "medium")},
+            cache_control={"type": "ephemeral"},  # the history only grows, so each turn re-reads the cached prefix
         )
         self.input_tokens += response.usage.input_tokens + (response.usage.cache_read_input_tokens or 0) + (response.usage.cache_creation_input_tokens or 0)
         self.output_tokens += response.usage.output_tokens
@@ -87,28 +98,37 @@ class ChatCompletionsAgent:
     def __init__(self, entry, system):
         import openai
         base_url, key_env = BASE_URLS[entry["provider"]]
-        self.client = openai.OpenAI(base_url=base_url, api_key=os.environ[key_env] if key_env else "ollama", max_retries=5)
+        self.client = openai.OpenAI(base_url=base_url, api_key=os.environ[key_env] if key_env else "ollama", max_retries=5, timeout=180)
         self.entry = entry
-        self.system = system
+        self.messages = [{"role": "system", "content": system}]
+        self.pending = []
         self.input_tokens = self.output_tokens = 0
         self.replies = []
 
     def next_moves(self, png, note):
+        # Tool results are text-only in this API, so the screenshot follows as a user message
+        for call_id in self.pending:
+            self.messages.append({"role": "tool", "tool_call_id": call_id, "content": "Done."})
+        self.messages.append({"role": "user", "content": [
+            {"type": "text", "text": note},
+            {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}},
+        ]})
+
         response = self.client.chat.completions.create(
             model=self.entry["model"],
-            messages=[{"role": "system", "content": self.system}, {"role": "user", "content": [
-                {"type": "text", "text": note},
-                {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}},
-            ]}],
+            messages=self.messages,
             tools=[{"type": "function", "function": DRAG}],
         )
         if response.usage:
             self.input_tokens += response.usage.prompt_tokens
             self.output_tokens += response.usage.completion_tokens
         message = response.choices[0].message
+        self.messages.append(message.model_dump(exclude_none=True))
         self.replies.append((message.content or "").strip())
+        calls = message.tool_calls or []
+        self.pending = [c.id for c in calls]
         moves = []
-        for c in message.tool_calls or []:
+        for c in calls:
             try:
                 move = json.loads(c.function.arguments)
             except json.JSONDecodeError:
