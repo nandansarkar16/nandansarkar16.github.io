@@ -132,7 +132,7 @@
                 <summary>How this works</summary>
                 <p>I open this page in a browser and show the model a screenshot, along with
                   <span class="lb-prompt" tabindex="0">a short set of instructions<span class="lb-prompt-text" role="tooltip">{% capture prompt %}{% include benchmark-prompt.txt %}{% endcapture %}{{ prompt | strip | replace: "[[moves]]", "150" | replace: "[[minutes]]", "20" | replace: "[[x0]]", "x" | replace: "[[y0]]", "y" | escape }}</span></span>.
-                  The model answers with mouse drags, like "move the piece here over to there," and I carry them out. Then I send a fresh screenshot, how many pieces are in, which of its recent drags locked in, and a note it left itself last turn.
+                  The model answers with mouse drags, like "move the piece here over to there," and I carry them out. Then I send a fresh screenshot and how many pieces are in. The model keeps the whole game in its conversation, so it can look back at every earlier screenshot and drag.
                   This repeats until the puzzle is done, the model runs out of its 150 moves or 20 minutes, or it goes two minutes without moving a piece.
                   Every model gets the same instructions and the same starting layout, and the pieces hold still so no one is chasing a moving target.
                   The clock includes the time each model spends thinking.</p>
