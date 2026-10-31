@@ -142,7 +142,7 @@ async function showBoard(fs, db) {
       });
       const runs = [...best.values()].sort((a, b) => (b.solved - a.solved) || (a.solved ? a.ms - b.ms : b.placed - a.placed));
       const rows = runs.flatMap((r, i) => {
-        const name = el("td", {}, logo(r), r.name);
+        const name = el("td", {}, logo(r), r.name, el("span", { class: "lb-caret", "aria-hidden": "true" }, "▾"));
         if (isAdmin()) name.append(deleteButton(fs, r.ref, r.name, refreshAgents));
         const row = el("tr", { class: "lb-run", tabindex: "0", "aria-expanded": "false" },
           el("td", {}, r.solved ? String(i + 1) : "–"), name,
