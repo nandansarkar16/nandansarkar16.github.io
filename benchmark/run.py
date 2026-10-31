@@ -8,10 +8,12 @@ import argparse
 import datetime
 import json
 import pathlib
+import ssl
 import subprocess
 import time
 import urllib.request
 
+import certifi
 import yaml
 from playwright.sync_api import sync_playwright
 
@@ -130,9 +132,10 @@ def publish_replay(file):
 def wait_until_live(url, limit=900):
     """GitHub Pages takes a minute or more to publish; post the result only once the replay loads."""
     end = time.monotonic() + limit
+    context = ssl.create_default_context(cafile=certifi.where())  # python.org's Python ships without system certificates
     while time.monotonic() < end:
         try:
-            with urllib.request.urlopen(url, timeout=20) as r:
+            with urllib.request.urlopen(url, timeout=20, context=context) as r:
                 if r.status == 200:
                     return True
         except Exception:

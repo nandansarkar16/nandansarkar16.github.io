@@ -5,3 +5,4 @@ pyyaml
 firebase-admin
 pillow
 imageio-ffmpeg
+certifi
