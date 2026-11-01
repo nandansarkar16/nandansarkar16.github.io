@@ -76,11 +76,11 @@ gpt-luna:
   model: openai/gpt-6-luna
 
 gemini:
-  name: Gemini 2.5 Pro   # check ai.google.dev/gemini-api/docs/models
+  name: Gemini 4 Argon
   company: Google
   logo: googlegemini
-  provider: gemini
-  model: gemini-2.5-pro
+  provider: openrouter
+  model: google/gemini-4-argon
 
 # Open models, run through OpenRouter (openrouter.ai/models - filter by "image input" and "tools")
 
