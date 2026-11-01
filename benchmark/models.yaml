@@ -68,6 +68,13 @@ gpt-astra:
   provider: openrouter
   model: openai/gpt-6-astra
 
+gpt-luna:
+  name: GPT-6 Luna
+  company: OpenAI
+  logo: openai
+  provider: openrouter
+  model: openai/gpt-6-luna
+
 gemini:
   name: Gemini 2.5 Pro   # check ai.google.dev/gemini-api/docs/models
   company: Google
