@@ -50,11 +50,11 @@ gemini:
 # Open models, run through OpenRouter (openrouter.ai/models - filter by "image input" and "tools")
 
 gemma:
-  name: Gemma 3 27B
+  name: Gemma 4 31B
   company: Google
   logo: google
   provider: openrouter
-  model: google/gemma-3-27b-it
+  model: google/gemma-4-31b-it
 
 llama:
   name: Llama 4 Maverick
@@ -64,15 +64,22 @@ llama:
   model: meta-llama/llama-4-maverick
 
 kimi:
-  name: Kimi               # pick a Kimi model with image input on OpenRouter
+  name: Kimi K3
   company: Moonshot AI
   logo: kimi
   provider: openrouter
-  model: moonshotai/kimi-vl-a3b-thinking
+  model: moonshotai/kimi-k3
+
+deepseek:
+  name: DeepSeek V4.1 Flash
+  company: DeepSeek
+  logo: deepseek
+  provider: openrouter
+  model: deepseek/deepseek-v4.1-flash
 
 qwen:
-  name: Qwen2.5 VL 72B
+  name: Qwen3.8 27B
   company: Alibaba
   logo: qwen
   provider: openrouter
-  model: qwen/qwen2.5-vl-72b-instruct
+  model: qwen/qwen3.8-27b
