@@ -91,6 +91,13 @@ gemma:
   provider: openrouter
   model: google/gemma-4-31b-it
 
+muse-wonder:
+  name: Muse Wonder
+  company: Meta
+  logo: meta
+  provider: openrouter
+  model: meta/muse-wonder
+
 llama:
   name: Llama 4 Maverick
   company: Meta
