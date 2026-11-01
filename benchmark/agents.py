@@ -113,6 +113,14 @@ class ChatCompletionsAgent:
             {"type": "text", "text": note},
             {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}},
         ]})
+        if self.entry["model"].startswith("anthropic/"):
+            # Claude caches only what's marked (OpenAI caches on its own): mark the newest message, and only it,
+            # since Claude allows few marks per request; each turn then re-reads the history up to the last mark
+            for m in self.messages:
+                if isinstance(m.get("content"), list):
+                    for part in m["content"]:
+                        part.pop("cache_control", None)
+            self.messages[-1]["content"][0]["cache_control"] = {"type": "ephemeral"}
 
         response = self.client.chat.completions.create(
             model=self.entry["model"],

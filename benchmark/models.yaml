@@ -33,6 +33,13 @@ claude-haiku-5-5:
   model: claude-haiku-5-5
   effort: medium
 
+claude-opus-5-5-openrouter:
+  name: Claude Opus 5.5 (OpenRouter)
+  company: Anthropic
+  logo: claude
+  provider: openrouter
+  model: anthropic/claude-opus-5.5
+
 gpt:
   name: GPT-6.1 Sol
   company: OpenAI
