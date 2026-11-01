@@ -63,7 +63,8 @@ def run(model_id, entry, args, browser, path, recorder):
         # Replay frames are taken off the clock: moving start forward by the capture time
         nonlocal start
         t = time.monotonic()
-        recorder.add(page, f"{entry['name']}  ·  move {moves}/{args.max_moves}  ·  {status['placed']}/{status['total']} placed")
+        recorder.add(page, f"{entry['name']}  ·  move {moves}/{args.max_moves}  ·  {status['placed']}/{status['total']} placed",
+                     args.time_limit - (t - start))
         start += time.monotonic() - t
 
     # Ends on: solved, the move cap, the time limit, or no drag for --idle-limit seconds
