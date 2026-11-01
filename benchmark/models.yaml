@@ -34,11 +34,11 @@ claude-haiku-5-5:
   effort: medium
 
 gpt:
-  name: GPT-5            # check platform.openai.com/docs/models
+  name: GPT-6.1 Sol
   company: OpenAI
   logo: openai
-  provider: openai
-  model: gpt-5
+  provider: openrouter
+  model: openai/gpt-6.1-sol
 
 gemini:
   name: Gemini 2.5 Pro   # check ai.google.dev/gemini-api/docs/models
